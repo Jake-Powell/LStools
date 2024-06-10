@@ -1,8 +1,10 @@
-#' A function that converts pathway to links for sankey (Note you need to remove the describers before using this function).
+#' A function that converts pathways to sankey diagram information.
+#'
+#' Note that you need to remove "describer" columns prior to using this function. In other words each column in pathways is viewed as a stage (KS1, KS2, etc) in the sankey diagram. Hence the order of columns is also important.
 #'
 #' @param pathways pathways
 #' @param links_as_pos links_as_pos
-#' @param remove_na remove_na
+#' @param remove_na remove_na Flag (TRUE/FALSE) for whether NA values are removed.
 #'
 #' @return links
 #' @export
@@ -149,50 +151,9 @@ pathway_to_links <- function(pathways,
     all_links[,2] = as.numeric(all_links[,2])
   }
 
-  sankey = list(nodes = nodes, links = all_links)
-  return(sankey)
-}
 
-
-#' A function that returns a sanket of the filtered data.
-#'
-#' @param pathways pathways
-#' @param flow_columns flow_columns
-#' @param filters filters
-#' @param union union
-#' @param FontFamily colors
-#' @param FontSize colors
-#'
-#' @return sankey diagram
-#' @export
-#'
-sankey_filtered <- function(pathways,
-                            flow_columns,
-                            filters,
-                            union=F,
-                            FontFamily = NULL,
-                            FontSize = 7){
-  # A) Check whether flow columns are text or indices.
-  if(!is.numeric(flow_columns)){
-    # Flow columns is not numeric assume text, need to find the indices.
-    flow_columns = match(flow_columns,names(pathways))
-    if(any(is.na(flow_columns))){
-      stop('Inputted text flow columns. At least one does not match names of pathways.')
-    }
-  }
-
-  # 1) Get the filtered data and create links and nodes.
-  if(filters == '' || is.null(filters)){
-    pathways_filtered = pathways
-  }
-  else{
-    pathways_filtered =filter_data(pathways,filters, union=union)
-
-  }
-  Links_filtered = pathway_to_links(pathways_filtered[,c(flow_columns,ncol(pathways))])
-  all_links = Links_filtered$links ; nodes = Links_filtered$nodes
-
-  #2) Add details to nodes.
+  ### Add node and link descriptions -----
+  #1) Add details to nodes.
   state = rep(NA,nrow(nodes))
   for(i in 1:nrow(nodes)){
     #Create the state start with the node name.
@@ -229,9 +190,9 @@ sankey_filtered <- function(pathways,
     mes = paste(mes,collapse='')
     state[i] = mes
   }
-  nodes = data.frame(nodes,state)
+  nodes = data.frame(nodes,description = state)
 
-  # 3) Update hover information for the links.
+  # 2) Add details to links
   details = rep(NA,nrow(all_links))
   for(i in 1:nrow(all_links)){
     link_cur = all_links[i,]
@@ -242,7 +203,7 @@ sankey_filtered <- function(pathways,
     #Add detail of the source/sink and the value of the flow.
     flow = as.numeric(link_cur[3])
     flow
-    mes = c(mes,  '\nFlow: (', as.vector(nodes[as.numeric(link_cur[1]+1),1]), ') -> (', as.vector(nodes[as.numeric(link_cur[2]+1),1]), ') = ',flow)
+    mes = c(mes,  'Flow: (', as.vector(nodes[as.numeric(link_cur[1]+1),1]), ') -> (', as.vector(nodes[as.numeric(link_cur[2]+1),1]), ') = ',flow)
 
     #Add detail of the percent of the flow out of source.
     flow_leave_source = sum(as.numeric(all_links[all_links[,1]  == as.numeric(link_cur[1]), 3]))
@@ -256,9 +217,57 @@ sankey_filtered <- function(pathways,
     details[i] = mes
   }
   name = details
-  all_links = data.frame(all_links,name)
+  all_links = data.frame(all_links,description = name)
 
-  # 4) Create basic sankey.
+  ### (END) Add node and link descriptions -----
+
+  sankey = list(nodes = nodes, links = all_links)
+  return(sankey)
+}
+
+
+#' Create sankey diagram of the filtered data.
+#'
+#' @param pathways student pathways with number of students.
+#' @param flow_columns Column names (or index) of the 'stages' in pathways that we want to create a sankey diagram of.
+#' @param filters a character vector describing the filters to apply to the data. Of the format `XX: YY` where XX is the stage and YY the node, such as 'FSM: Yes'.
+#' @param union Flag (TRUE/FALSE) for whether we want the union of filters (only across single stages)
+#' @param fontFamily font family for the node text labels.
+#' @param fontSize numeric font size in pixels for the node text labels.
+#'
+#' @return sankey diagram
+#' @export
+#'
+sankey_filtered <- function(pathways,
+                            flow_columns,
+                            filters = '',
+                            union=F,
+                            fontFamily = NULL,
+                            fontSize = 7){
+  # A) Check whether flow columns are text or indices.
+  if(!is.numeric(flow_columns)){
+    # Flow columns is not numeric assume text, need to find the indices.
+    flow_columns = match(flow_columns,names(pathways))
+    if(any(is.na(flow_columns))){
+      stop('Inputted text flow columns. At least one does not match names of pathways.')
+    }
+  }
+
+  # 1) Get the filtered data and create links and nodes.
+  if(filters[1] == '' || is.null(filters)){
+    pathways_filtered = pathways
+  }
+  else{
+    pathways_filtered =filter_data(pathways,filters, union=union)
+
+  }
+
+  # 2) Convert Pathwats to sankey data.
+  Links_filtered = pathway_to_links(pathways_filtered[,c(flow_columns,ncol(pathways))])
+  all_links = Links_filtered$links ; nodes = Links_filtered$nodes
+
+
+  # 4) Create sankey diagram.
   p <- networkD3::sankeyNetwork(Links = all_links,
                                 Nodes = nodes,
                                 Source = "source",
@@ -267,45 +276,20 @@ sankey_filtered <- function(pathways,
                                 NodeID = "names",
                                 sinksRight = F,
                                 iterations= 0,
-                                FontFamily = FontFamily,
-                                FontSize = FontSize)
+                                fontFamily = fontFamily,
+                                fontSize = fontSize) |>
+    add_node_hover_text(hovertext = nodes$description) |>
+    add_link_hover_text(hovertext = all_links$description)
 
-  # 5) Sankey with altered hover information for the nodes.
-  p$x$nodes$state <- nodes$state
-  p <- htmlwidgets::onRender(
-    p,
-    '
-            function(el, x) {
-                d3.selectAll(".node").select("title foreignObject body pre")
-                .text(function(d) { return d.state; });
-            }
-            '
-  )
-
-  # 10) Sankey with altered hover infomration for the edges.
-  p$x$links$name <- all_links$name
-  p <- htmlwidgets::onRender(
-    p,
-    '
-  function(el, x) {
-  d3.selectAll(".link").select("title foreignObject body pre")
-  .text(function(d) { return d.name; });
-  }
-  '
-  )
 
   return(p)
 }
 
-#' A function that returns a sankey 'traced' diagram.
+#' Create traced sankey diagram
 #'
-#' @param pathways pathways
-#' @param flow_columns flow_columns
-#' @param split_by split_by
-#' @param union union
-#' @param colors colors
-#' @param FontFamily colors
-#' @param FontSize colors
+#' @inheritParams sankey_filtered
+#' @param split_by a character vector describing the filters to split the data by. Of the format `XX: YY` where XX is the stage and YY the node, such as 'FSM: Yes'.
+#' @param colors a character vector of length three `c(colA, colB, colC)` where colA is the link colour for traced students, colB is the link colour for other students and colC is the node colour.
 #'
 #' @return traced sankey diagram
 #' @export
@@ -315,8 +299,8 @@ sankey_trace <- function(pathways,
                          split_by,
                          union=F,
                          colors = c("red", "gray", "antiquewhite"),
-                         FontFamily = NULL,
-                         FontSize = 7
+                         fontFamily = NULL,
+                         fontSize = 7
                          ){
 
   #Get the links for the full pathways and 'traced' pathways.
@@ -353,12 +337,14 @@ sankey_trace <- function(pathways,
     cur = Links_full$links[i,]
     full_source_sink = cur[1:2]
     sub_source_sink = node_compare[2,which(node_compare[1,] %in% full_source_sink)]
+    subset_flow = which(Links_traced$links[,1] == sub_source_sink[1] & Links_traced$links[,2] == sub_source_sink[2])
     # Check if the link exists in the subset of flows. If it does not add original else split.
-    if(any(is.na(sub_source_sink))){
+    # if(any(is.na(sub_source_sink))){
+    if(length(subset_flow) == 0){
       links_notsubset = rbind(links_notsubset, cur)
     }
     else{ # node pair exist in both full and subset of flows.
-      sub_link = Links_traced$links[Links_traced$links[,1] == sub_source_sink[1] & Links_traced$links[,2] == sub_source_sink[2],]
+      sub_link = Links_traced$links[subset_flow,]
       new_link = cur
       new_link[3] = as.numeric(cur[3]) - as.numeric(sub_link[3])
       links_notsubset = rbind(links_notsubset,new_link)
@@ -441,6 +427,8 @@ sankey_trace <- function(pathways,
   my_color <- paste0('d3.scaleOrdinal() .domain(["type_a", "type_b", "my_unique_group"]) .range([',
                      paste(shQuote(colors, type="cmd"), collapse=", "),'])' )
 
+  all_links = all_links[all_links$value != '0',]
+
   # 9) Original sankey diagram
   p <- networkD3::sankeyNetwork(Links = all_links,
                                 Nodes = nodes,
@@ -453,8 +441,8 @@ sankey_trace <- function(pathways,
                                 NodeGroup="group",
                                 sinksRight = F,
                                 iterations = 0,
-                                FontFamily = FontFamily,
-                                FontSize = FontSize)
+                                fontFamily = fontFamily,
+                                fontSize = fontSize)
 
   # 10) Sankey with altered hover infomration for the edges.
   p$x$links$name <- all_links$name
@@ -484,35 +472,4 @@ sankey_trace <- function(pathways,
   return(p)
 
 
-}
-
-#' Add column labels to a Sankey diagram
-#'
-#' @param p sankey diagram
-#' @param column_titles column_titles
-#' @param fontSize fontSize
-#' @param fontFamily fontFamily
-#'
-#' @export
-#'
-sankey_add_column_names <- function(p, column_titles, fontSize = p$x$options$fontSize, fontFamily = p$x$options$fontFamily){
-  labels = column_titles
-  p =htmlwidgets::onRender(p, paste0('
-  function(el) {
-    var cols_x = this.sankey.nodes().map(d => d.x).filter((v, i, a) => a.indexOf(v) === i).sort(function(a, b){return a - b});
-    var labels = [',
-                                     paste(shQuote(labels, type="cmd"), collapse=", "),
-                                     '];
-    cols_x.forEach((d, i) => {
-      d3.select(el).select("svg")
-        .append("text")
-        .attr("x", d)
-        .attr("y", 12)
-        .text(labels[i])
-        .style("font-size", "',fontSize,'px")
-        .style("font-family", "',fontFamily,'");
-    })
-  }
-'))
-  p
 }

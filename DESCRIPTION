@@ -3,15 +3,20 @@ Type: Package
 Title: Tools for exploring longitudinal (education) data (sankey diagrams)
 Version: 0.1.0
 Author: Jake Powell
-Maintainer: The package maintainer <yourself@somewhere.net>
+Maintainer: Jake Powell <Jake.Powell2@nottingham.ac.uk>
 Description: functions for creating sankey diagrams (build upon networkD3 package) for longitudinal (education) data together with other useful functions.
 License: AGPL (>= 3)
 Encoding: UTF-8
 LazyData: true
 Imports: 
+    colorspace,
     dplyr,
     htmlwidgets,
     networkD3,
+    openxlsx,
     stats,
+    stringr,
     tibble
 RoxygenNote: 7.2.3
+Suggests: 
+    rmarkdown

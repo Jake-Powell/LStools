@@ -2,7 +2,7 @@
 % Please edit documentation in R/Sankey_functions.R
 \name{pathway_to_links}
 \alias{pathway_to_links}
-\title{A function that converts pathway to links for sankey (Note you need to remove the describers before using this function).}
+\title{A function that converts pathways to sankey diagram information.}
 \usage{
 pathway_to_links(pathways, links_as_pos = TRUE, remove_na = T)
 }
@@ -11,11 +11,11 @@ pathway_to_links(pathways, links_as_pos = TRUE, remove_na = T)
 
 \item{links_as_pos}{links_as_pos}
 
-\item{remove_na}{remove_na}
+\item{remove_na}{remove_na Flag (TRUE/FALSE) for whether NA values are removed.}
 }
 \value{
 links
 }
 \description{
-A function that converts pathway to links for sankey (Note you need to remove the describers before using this function).
+Note that you need to remove "describer" columns prior to using this function. In other words each column in pathways is viewed as a stage (KS1, KS2, etc) in the sankey diagram. Hence the order of columns is also important.
 }

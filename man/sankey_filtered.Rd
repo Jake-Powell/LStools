@@ -2,33 +2,33 @@
 % Please edit documentation in R/Sankey_functions.R
 \name{sankey_filtered}
 \alias{sankey_filtered}
-\title{A function that returns a sanket of the filtered data.}
+\title{Create sankey diagram of the filtered data.}
 \usage{
 sankey_filtered(
   pathways,
   flow_columns,
-  filters,
+  filters = "",
   union = F,
-  FontFamily = NULL,
-  FontSize = 7
+  fontFamily = NULL,
+  fontSize = 7
 )
 }
 \arguments{
-\item{pathways}{pathways}
+\item{pathways}{student pathways with number of students.}
 
-\item{flow_columns}{flow_columns}
+\item{flow_columns}{Column names (or index) of the 'stages' in pathways that we want to create a sankey diagram of.}
 
-\item{filters}{filters}
+\item{filters}{a character vector describing the filters to apply to the data. Of the format `XX: YY` where XX is the stage and YY the node, such as 'FSM: Yes'.}
 
-\item{union}{union}
+\item{union}{Flag (TRUE/FALSE) for whether we want the union of filters (only across single stages)}
 
-\item{FontFamily}{colors}
+\item{fontFamily}{font family for the node text labels.}
 
-\item{FontSize}{colors}
+\item{fontSize}{numeric font size in pixels for the node text labels.}
 }
 \value{
 sankey diagram
 }
 \description{
-A function that returns a sanket of the filtered data.
+Create sankey diagram of the filtered data.
 }

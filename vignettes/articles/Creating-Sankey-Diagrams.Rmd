@@ -1,0 +1,178 @@
+---
+title: "Creating Sankey Diagrams"
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(LStools)
+library(htmlwidgets)
+```
+
+*In this vignette we show how to use the LStools package to create sankey diagrams of the educational pipeline*
+
+Firstly we need to create some data. 
+
+```{r, echo = T}
+set.seed(33)
+KS1 = sample(c('3+','2A','2B', '2C-'), 10000, replace = T, prob = c(.21,.28,.26,.25))
+KS2 = sample(c('6','5+', '5-','4','3-'), 10000, replace = T, prob = c(0.03, 0.15, 0.22, 0.46, 0.13))
+GCSE = sample(c('9','8', '7', '6-'), 10000, replace = T, prob = c(0.03, 0.07, 0.10, 0.80))
+A_level =  sample(c('Maths + Further',  'Maths', 'No Maths'), 10000, replace = T, prob = c(0.02, 0.09, 0.89))
+FSM = sample(c('Yes', 'No'), 10000, replace = T, prob = c(.238, 1-.238))
+
+raw = data.frame(FSM = factor(FSM),
+                 KS1 = factor(KS1, levels = c('3+','2A','2B', '2C-')),
+                 KS2 = factor(KS2, levels = c('6','5+', '5-','4','3-')),
+                 GCSE= factor(GCSE, levels = c('9','8', '7', '6-')), 
+                 A_level = factor(A_level, levels = c('Maths + Further',  'Maths', 'No Maths')))
+```
+
+Within the data each row contains information about an individual student, in our case whether they are classed as receiving free school meals (FSM), and their maths grades at KS1 (5 years old), KS2 (11 years old), GCSE (16 years old) and whether they do maths at A-levels (18 years old). The students grades are grouped at the various levels mirroring the proportion of students taken from the maths pipeline report (figure XX). Note that the columns must be cast by factor with the order in which you want the 'nodes' to appear (i.e in our case highest level to lowest level).
+
+We show the first 10 rows of the data below
+
+`r DT::datatable(raw[1:10,], , rownames = FALSE, options = list(scrollX = TRUE,pageLength = nrow(10), dom = 'tp', paging=FALSE))`
+
+We want to be able to visualise the data via a sankey diagram from KS1 to A-levels. The first step is to convert the individual student data (contained in `raw`) to 'pathways', using the function `raw_to_pathway()` which details the number of students who have unique demographics and paths through the pipeline.
+
+```{r, echo = T}
+pathways = LStools::raw_to_pathway(raw)
+```
+
+The first 10 rows of pathways are shown below
+
+`r DT::datatable(pathways[1:10,], , rownames = FALSE, options = list(scrollX = TRUE,pageLength = nrow(10), dom = 'tp', paging=FALSE))`
+
+### Creating sankey diagrams directly using pathways
+
+We can then use `sankey_filtered()` to convert the pathways data frame into a sankey diagram.
+
+```{r, fig.dim = c(10, 4)}
+p = sankey_filtered(pathways = pathways, flow_columns = c(2:5), filters = '')
+
+p
+```
+
+Where the `flow_columns` specifies the columns used in pathways for the sankey diagram in order. This can be specified either with the column numbers (2 = KS1, 3 = KS2, etc) or via the columns names ` flow_columns = c('KS1', 'KS2', 'GCSE', 'A_level')`.
+
+We can use the same function to explore subsections of the pipeline by using the `filters` input.
+
+```{r, fig.dim = c(10, 4)}
+# Only those that have GCSE grade 9.
+p = sankey_filtered(pathways = pathways, flow_columns = c(2:5), filters = 'GCSE: 9')
+p
+
+# Only those that have GCSE grade 9 and KS2 level 5+.
+p = sankey_filtered(pathways = pathways, flow_columns = c(2:5), filters = c('GCSE: 9', 'KS2: 5+'))
+p
+
+# Only those that have GCSE grade 9 or grade 8.
+p = sankey_filtered(pathways = pathways, flow_columns = c(2:5), filters = c('GCSE: 9', 'GCSE: 8'), union = T)
+p
+```
+ 
+ Note that the `union` input only allows for looking at flows through multiple nodes at a particular stage. I.e if you set `union = T` in the example with KS2 level 5+ and GCSE grade 9 the output would be the same sankey diagram (rather than any student who got KS2 level 5+ or GCSE grade 9).
+ 
+ As well as zooming into particular parts of the pipeline the filter can also be used in relation to demographics as well. 
+ 
+```{r, fig.dim = c(10, 4)}
+# Only those that have FSM status.
+p = sankey_filtered(pathways = pathways, flow_columns = c(2:5), filters = 'FSM: Yes')
+p
+
+# Only those that are FSM and got a grade 9 at GCSE.
+p = sankey_filtered(pathways = pathways, flow_columns = c(2:5), filters = c('GCSE: 9', 'FSM: Yes'))
+p
+
+```
+
+If we instead want to 'trace' the students of interest within the whole system we can use the `sankey_trace()` function, where instead of 'filters' we enter the students we want to trace by the `split_by` input. 
+
+```{r, fig.dim = c(10, 4)}
+# Only those that have FSM status.
+p = sankey_trace(pathways = pathways, flow_columns = c(2:5), split_by = 'FSM: Yes')
+p
+
+# Only those that got a grade 9 at GCSE.
+p = sankey_trace(pathways = pathways, flow_columns = c(2:5), split_by = c('GCSE: 9' ))
+p
+
+```
+
+### Customisation visualisation options 
+
+In this section we show how to use functions to alter the visualisation of the sankey diagrams. 
+
+```{r, customise plot options}
+p = sankey_filtered(pathways = pathways, flow_columns = c(2:5), filters = c('GCSE: 9', 'GCSE: 8'), union = T)
+
+## Add header to columns
+p |> add_column_names(column_titles = c('KS1', 'KS2', 'GCSE', 'A Level'),fontSize = 14)
+
+# Update the node names.
+# p |> get_nodes() # Can be run to get the node order in the diagram to change.
+p |> update_node_title(titles = c("Level 3+", "Level 2A", "Level 2B", "Level 2C-",
+                       "Level 6", "Level 5+", "Level 5-", "Level 4", "Level 3-",
+                       "Grade 8","Grade 9",
+                       "Maths + Further", "Maths", "No Maths" ))
+
+# Change the colour scheme where the links correspond to the node values (doesn't show in Rmarkdown)
+p |> update_sankey_colour(colors_node =  viridis::magma(length(p |> get_nodes())),
+                          type = 'source') 
+
+
+# Change the colour for only specified links. (doesn't show in Rmarkdown)
+col = rep('gray', p |> get_links() |> length())
+col[c(1,5,10)] = 'orange'
+col[c(2,25,20)] = 'green'  
+
+p |> update_sankey_colour(colors_node = viridis::magma(length(p |> get_nodes())),
+                                colors_link = col)
+```
+
+
+### Saving / exporting sankey diagrams
+
+We can use the `saveNetwork()` from the NetworkD3 package to save the widget into an .html file or we can use the webshot() function from the webshot2 package to save a static version of the plot to a .png file (by taking an image from a saved .html version.
+
+```{r, eval = FALSE}
+# Save the interactive sankey diagram
+networkD3::saveNetwork(network = p,
+                       file = paste0('sankey_diagram.html'))
+
+# Save a static version of the plot (need to save an interactive version first)
+webshot2::webshot(url = 'sankey_diagram.html',
+                  file =  'sankey_diagram.png',
+                  vwidth = 1000,
+                  vheight = 700)
+
+```
+
+Or to save the underlying information in the sankey diagram to formatted .xlsx file you can use the function `sankey_export_xlsx()`, which allows a title and source to be added to the spreadsheet (needed for statistical disclosure). This method creates a spreadsheet with the columns 'Source', 'Target' and 'Number of Students' describing the flow between all nodes in the diagram. If we are saving a filtered sankey diagram another column will be added informing whether the flow relates to the traced or non-traced students.
+
+```{r, eval = FALSE}
+  # Save an .xlsx file containing the sankey information (for SDC check)
+  p |> LStools::sankey_export_xlsx(title = 'Student flow from KS1 to A-level choices',
+                              source = 'Source: National Pupil Database',
+                              filepath = paste0(getwd(), '/sankey_information.xlsx'))
+  
+    # Save an .xlsx file containing the sankey information traced version
+    p = sankey_trace(pathways = pathways,
+                     flow_columns = c(2:5),
+                     split_by = c('GCSE: 9','GCSE: 8' ),
+                     union = T) 
+    p |>
+      LStools::sankey_export_xlsx(title = 'Student flow from KS1 to A-level choices tracing those that achieve grade 8 or 9 at GCSE',
+                              source = 'Source: National Pupil Database',
+                              filepath = paste0(getwd(), '/sankey_information2.xlsx'))
+
+
+```
+
+
