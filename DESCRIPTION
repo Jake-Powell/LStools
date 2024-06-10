@@ -20,5 +20,6 @@ Imports:
     tibble
 RoxygenNote: 7.2.3
 Suggests: 
-    rmarkdown
+    rmarkdown,
+    viridis
 URL: https://jakepowellcubg.github.io/LStools/
