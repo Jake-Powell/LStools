@@ -8,4 +8,11 @@
 \description{
 functions for creating sankey diagrams (build upon networkD3 package) for longitudinal (education) data together with other useful functions.
 }
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://jakepowellcubg.github.io/LStools/}
+}
+
+}
 \keyword{internal}
