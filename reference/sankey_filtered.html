@@ -54,7 +54,9 @@
 <span>  filters <span class="op">=</span> <span class="st">""</span>,</span>
 <span>  union <span class="op">=</span> <span class="cn">F</span>,</span>
 <span>  fontFamily <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  fontSize <span class="op">=</span> <span class="fl">7</span></span>
+<span>  fontSize <span class="op">=</span> <span class="fl">7</span>,</span>
+<span>  do_SDC <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -82,6 +84,14 @@
 
 <dt>fontSize</dt>
 <dd><p>numeric font size in pixels for the node text labels.</p></dd>
+
+
+<dt>do_SDC</dt>
+<dd><p>Flag (TRUE/FALSE) for whether you want to do SDC via the `SDC_to_links()` function.</p></dd>
+
+
+<dt>...</dt>
+<dd><p>arguments to `SDC_to_links()` or `networkD3::sankeyNetwork()`.</p></dd>
 
 </dl></div>
     <div class="section level2">
