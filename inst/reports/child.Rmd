@@ -1,0 +1,87 @@
+---
+title: 'Child Document'
+tag: "Child document"
+---
+
+```{r}
+values = params$breakdown
+values_og = values
+
+stage = names(values[1])
+describer =  names(values[2])
+
+values = values[values[,3] != '-',]
+for(i in 3:5){
+  values[[i]] = values[[i]] |> as.numeric()
+}
+# Create horizontal bar plot grouped by stage values.
+fig1 = plotly::plot_ly(data = values,
+                x = ~percent_stage,
+                y = values[[1]],
+                color = values[[2]],
+                type = 'bar',
+                orientation = 'h',
+                legendgrouptitle = list(text = describer)) |>
+  layout(barmode = 'stack',
+         yaxis = list(title = stage),
+         xaxis = list(title = 'Percentage of Students')
+         )
+
+data_cur = values[values[[1]] != 'All',]
+fig2 = plotly::plot_ly(data = data_cur,
+                x = ~percent_describer,
+                y = data_cur[[2]],
+                color = data_cur[[1]],
+                type = 'bar',
+                orientation = 'h',
+                legendgrouptitle = list(text = stage)) |>
+  layout(barmode = 'stack',
+         yaxis = list(title = describer),
+         xaxis = list(title = 'Percentage of Students')
+         )
+
+show_table = values_og[,-ncol(values)]
+names(show_table)[3:5] = c('Total students', paste0('Percentage of ', describer ),  paste0('Percentage of ', stage))
+if(!do_SDC){
+show_table[[4]] = show_table[[4]] |> round(2)
+show_table[[5]] = show_table[[5]] |> round(2)  
+}
+
+
+```
+
+## `r describer`
+
+In this section we explore the composition of `r stage` relative to `r describer`.
+Within `r describer` there are `r length(unique(values[[2]]))` different values, these are `r paste0(unique(values[[2]]), collapse = ', ')`.
+
+Below we produce bar charts showing the composition of each level in `r stage` by `r describer` (*Split by `r describer`* tab) and the reverse of showing the distribution of `r stage` levels within each `r describer` category (*Split by `r stage`* tab). We also provide the table used to create these charts.
+
+#####  {.tabset}
+
+###### Split by `r describer`
+
+`r fig1`
+
+###### Split by `r stage`
+
+`r fig2`
+
+###### Table
+
+```{r}
+show_table |>  DT::datatable(extensions = 'Buttons',
+                rownames = FALSE,
+                options = list(scrollX = TRUE,
+                               pageLength = min(nrow(values), 10),
+                               dom = ifelse(nrow(values) <=10 ,'Bt','Btp'),
+                               buttons = c('copy', 'csv', 'excel', 'pdf'),
+                               ordering=F,
+                               paging=ifelse(nrow(values) <=10 ,F,T)),
+                filter = list(position = "top"))
+```
+
+##### {-}
+
+
+***

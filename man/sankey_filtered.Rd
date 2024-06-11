@@ -10,7 +10,9 @@ sankey_filtered(
   filters = "",
   union = F,
   fontFamily = NULL,
-  fontSize = 7
+  fontSize = 7,
+  do_SDC = FALSE,
+  ...
 )
 }
 \arguments{
@@ -25,6 +27,10 @@ sankey_filtered(
 \item{fontFamily}{font family for the node text labels.}
 
 \item{fontSize}{numeric font size in pixels for the node text labels.}
+
+\item{do_SDC}{Flag (TRUE/FALSE) for whether you want to do SDC via the `SDC_to_links()` function.}
+
+\item{...}{arguments to `SDC_to_links()` or `networkD3::sankeyNetwork()`.}
 }
 \value{
 sankey diagram

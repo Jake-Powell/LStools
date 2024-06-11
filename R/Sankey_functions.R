@@ -5,13 +5,14 @@
 #' @param pathways pathways
 #' @param links_as_pos links_as_pos
 #' @param remove_na remove_na Flag (TRUE/FALSE) for whether NA values are removed.
-#'
+#' @param ... arguments to `SDC_to_links()`.
 #' @return links
 #' @export
 #'
 pathway_to_links <- function(pathways,
                              links_as_pos = TRUE,
-                             remove_na=T){
+                             remove_na=T,
+                             ...){
   if(remove_na==F){
     #Join colname to pathways elements to make sure there's no repeated values across columns. For example an A at GCSE and an A at a level.
     p=as.data.frame(pathways)
@@ -62,8 +63,7 @@ pathway_to_links <- function(pathways,
 
     sankey = list(nodes = nodes, links = all_links)
     return(sankey)
-  }
-  else{
+  }else{
     #Join colname to pathways elements to make sure there's no repeated values across columns. For example an A at GCSE and an A at a level. Do not change if the value is NA.
     p=as.data.frame(pathways)
     for(i in 1:(ncol(p)-1)){
@@ -151,6 +151,9 @@ pathway_to_links <- function(pathways,
     all_links[,2] = as.numeric(all_links[,2])
   }
 
+  ### Apply SDC ----
+  all_links$SDC <- all_links |> SDC_to_links(...)
+  ### (END) Apply SDC
 
   ### Add node and link descriptions -----
   #1) Add details to nodes.
@@ -222,9 +225,29 @@ pathway_to_links <- function(pathways,
   ### (END) Add node and link descriptions -----
 
   sankey = list(nodes = nodes, links = all_links)
+
+
   return(sankey)
 }
 
+#' Statistical disclosure to sankey
+#'
+#' @param links links of a sankey diagram
+#' @param round_to number to round to
+#' @param issue_level number, where links with fewer students have their value omitted (set to "Below issue_level").
+#'
+#' @return vector containing the links after performing SDC
+#' @export
+#'
+SDC_to_links <- function(links, round_to = 5, issue_level = 5){
+  new_links = links$value |> as.numeric()
+  new_links[new_links <= issue_level] = paste0('Below ', issue_level)
+  new_links[new_links != paste0('Below ', issue_level)] = new_links[new_links != paste0('Below ', issue_level)] |>
+    as.numeric() |>
+    plyr::round_any(round_to)
+
+  new_links
+}
 
 #' Create sankey diagram of the filtered data.
 #'
@@ -234,6 +257,8 @@ pathway_to_links <- function(pathways,
 #' @param union Flag (TRUE/FALSE) for whether we want the union of filters (only across single stages)
 #' @param fontFamily font family for the node text labels.
 #' @param fontSize numeric font size in pixels for the node text labels.
+#' @param do_SDC Flag (TRUE/FALSE) for whether you want to do SDC via the `SDC_to_links()` function.
+#' @param ... arguments to `SDC_to_links()` or `networkD3::sankeyNetwork()`.
 #'
 #' @return sankey diagram
 #' @export
@@ -243,7 +268,9 @@ sankey_filtered <- function(pathways,
                             filters = '',
                             union=F,
                             fontFamily = NULL,
-                            fontSize = 7){
+                            fontSize = 7,
+                            do_SDC = FALSE,
+                            ...){
   # A) Check whether flow columns are text or indices.
   if(!is.numeric(flow_columns)){
     # Flow columns is not numeric assume text, need to find the indices.
@@ -263,7 +290,7 @@ sankey_filtered <- function(pathways,
   }
 
   # 2) Convert Pathwats to sankey data.
-  Links_filtered = pathway_to_links(pathways_filtered[,c(flow_columns,ncol(pathways))])
+  Links_filtered = pathway_to_links(pathways_filtered[,c(flow_columns,ncol(pathways))],...)
   all_links = Links_filtered$links ; nodes = Links_filtered$nodes
 
 
@@ -277,7 +304,8 @@ sankey_filtered <- function(pathways,
                                 sinksRight = F,
                                 iterations= 0,
                                 fontFamily = fontFamily,
-                                fontSize = fontSize) |>
+                                fontSize = fontSize,
+                                ...) |>
     add_node_hover_text(hovertext = nodes$description) |>
     add_link_hover_text(hovertext = all_links$description)
 

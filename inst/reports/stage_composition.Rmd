@@ -1,0 +1,258 @@
+---
+title: "Stage composition"
+output: html_document
+---
+
+##### {-}
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+library(plotly)
+library(htmltools)
+library(sf)
+library(here)
+library(flextable)
+library(ggrepel)
+library(LStools)
+```
+
+```{r, imported parameters}
+#Inputs
+# set.seed(33)
+# KS1 = sample(c('3+','2A','2B', '2C-'), 10000, replace = T, prob = c(.21,.28,.26,.25))
+# KS2 = sample(c('6','5+', '5-','4','3-'), 10000, replace = T, prob = c(0.03, 0.15, 0.22, 0.46, 0.13))
+# GCSE = sample(c('9','8', '7', '6-'), 10000, replace = T, prob = c(0.03, 0.07, 0.10, 0.80))
+# A_level =  sample(c('Maths + Further',  'Maths', 'No Maths'), 10000, replace = T, prob = c(0.02, 0.09, 0.89))
+# FSM = sample(c('Yes', 'No'), 10000, replace = T, prob = c(.238, 1-.238))
+# 
+# raw = data.frame(FSM = factor(FSM),
+#                  KS1 = factor(KS1, levels = c('3+','2A','2B', '2C-')),
+#                  KS2 = factor(KS2, levels = c('6','5+', '5-','4','3-')),
+#                  GCSE= factor(GCSE, levels = c('9','8', '7', '6-')), 
+#                  A_level = factor(A_level, levels = c('Maths + Further',  'Maths', 'No Maths')))
+# 
+# 
+# describer_columns = 1:3
+# stage_column = 4
+# report_name = 'GCSE composition'
+# report_kind = 'interactive'
+# reference_docx = NULL
+# output_dir = getwd()
+# do_SDC = TRUE
+
+pathways = raw_to_pathway(raw)
+if(is.numeric(stage_column)){
+  stage_column = names(pathways)[stage_column]
+}
+
+if(is.numeric(describer_columns)){
+  describer_columns = names(pathways)[describer_columns]
+}
+
+```
+
+```{r, headline values without SDC, eval = !do_SDC}
+total_students = sum(pathways$No_students)
+missing_stage = sum(is.na(raw[[stage_column]]))
+
+# Composition of all students.
+stage = raw[[stage_column]]
+stage = stage[!is.na(stage)]
+stage_table = table(stage) |> data.frame()
+stage_table$percent = (stage_table$Freq / sum(stage_table$Freq) * 100 ) |> round(2)
+names(stage_table) = c('Stage value', 'Number of Students', 'Percent of Students')
+below_minimum = which(stage_table$Freq == 1)
+if(length(below_minimum)>0){
+  stage_table[below_minimum, ]
+}
+## Composition by describers
+breakdown = pbapply::pblapply(describer_columns, function(col_name){
+  table_of_values = raw |>
+    dplyr::count(dplyr::across(c(stage_column, col_name))) |>
+    dplyr::group_by(dplyr::across(c(col_name))) |>
+    dplyr::mutate(percent_describer = n / sum(n)*100) |>
+    dplyr::group_by(dplyr::across(c(stage_column))) |>
+    dplyr::mutate(percent_stage = n / sum(n)*100)
+  table_of_values$describer = col_name
+  
+  describer_only_table = raw |>
+    dplyr::count(dplyr::across(c(col_name))) |>
+    dplyr::mutate(percent_describer = n / sum(n)*100) 
+  describer_only_table$percent_stage = describer_only_table$percent_describer
+  describer_only_table$describer = col_name
+  describer_only_table[[stage_column]] = rep('All', nrow(describer_only_table))
+  describer_only_table = describer_only_table[,match(names(table_of_values), names(describer_only_table))]
+  
+  rbind(describer_only_table, table_of_values)
+})
+names(breakdown) = describer_columns
+
+```
+
+```{r, headline values with SDC, eval = do_SDC}
+SDC <- function(numbers, do_SDC = TRUE, round_to = 5, issue_level = 5, numeric_only = T){
+  if(!do_SDC){
+    return(numbers)
+  }
+  new_links = numbers
+  below_minimum = which(new_links <= issue_level & new_links > 0)
+  if(length(below_minimum) > 0){
+     new_links[below_minimum] = ifelse(numeric_only, 0, paste0('Below ', issue_level))
+     
+     new_links[-below_minimum] = new_links[-below_minimum] |>
+    as.numeric() |>
+    plyr::round_any(round_to)
+
+  return(new_links)
+  }
+ 
+  return(new_links |> plyr::round_any(round_to))
+  
+}
+
+total_students = sum(pathways$No_students) |> SDC(do_SDC = do_SDC, issue_level = issue_level, numeric_only = F, round_to = round_to)
+missing_stage = sum(is.na(raw[[stage_column]])) |> SDC(do_SDC = do_SDC, issue_level = issue_level, numeric_only = F, round_to = round_to) 
+
+
+# Composition of all students.
+stage = raw[[stage_column]]
+stage = stage[!is.na(stage)]
+stage_table = table(stage) |> data.frame()
+text_stage_freq =  stage_table$Freq |>  SDC(do_SDC = do_SDC, issue_level = issue_level,numeric_only = F, round_to = round_to)
+stage_table$Freq = stage_table$Freq |>  SDC(do_SDC = do_SDC, issue_level = issue_level, round_to = round_to)
+stage_table$percent = (stage_table$Freq / sum(stage_table$Freq) * 100 ) |> round(0)
+names(stage_table) = c('Stage value', 'Number of Students', 'Percent of Students')
+below_minimum = grep('Below',text_stage_freq)
+if(length(below_minimum)>0){
+  stage_table[below_minimum, 2:3 ] = '-'
+}
+## Composition by describers
+breakdown = pbapply::pblapply(describer_columns, function(col_name){
+  table_of_values = raw |>
+    dplyr::count(dplyr::across(c(stage_column, col_name)))
+  text_n = table_of_values$n |>  SDC(do_SDC = do_SDC, issue_level = issue_level,numeric_only = F,  round_to = round_to)
+  table_of_values$n = table_of_values$n |> SDC(do_SDC = do_SDC, issue_level = issue_level, round_to = round_to)
+  table_of_values = table_of_values |>
+    dplyr::group_by(dplyr::across(c(col_name))) |>
+    dplyr::mutate(percent_describer = (n / sum(n)*100) |> round()) |>
+    dplyr::group_by(dplyr::across(c(stage_column))) |>
+    dplyr::mutate(percent_stage = (n / sum(n)*100)|> round(0)) |> as.data.frame()
+
+  table_of_values$describer = col_name
+  below_minimum = grep('Below',text_n)
+  if(length(below_minimum)>0){
+  table_of_values[below_minimum, 3:5 ] = '-'
+  }
+  
+  describer_only_table = raw |>
+    dplyr::count(dplyr::across(c(col_name)))
+   text_n = describer_only_table$n |>  SDC(do_SDC = do_SDC, issue_level = issue_level,numeric_only = F, round_to = round_to)
+  describer_only_table$n = describer_only_table$n |> SDC(do_SDC = do_SDC, issue_level = issue_level, round_to = round_to)
+  
+  describer_only_table = describer_only_table |>
+    dplyr::mutate(percent_describer = (n / sum(n)*100)|> round(0)) 
+  describer_only_table$percent_stage = describer_only_table$percent_describer
+  describer_only_table$describer = col_name
+  describer_only_table[[stage_column]] = rep('All', nrow(describer_only_table))
+  describer_only_table = describer_only_table[,match(names(table_of_values), names(describer_only_table))]
+  
+    below_minimum = grep('Below',text_n)
+  if(length(below_minimum)>0){
+  describer_only_table[below_minimum, 3:5 ] = '-'
+  }
+  
+  rbind(describer_only_table, table_of_values)
+})
+names(breakdown) = describer_columns
+
+```
+
+```{r, save values}
+main_title = openxlsx::createStyle(fontSize = 14, textDecoration = "bold", halign = "left")
+second_title = openxlsx::createStyle(fontSize = 10, textDecoration = "italic", halign = "left")
+student_count = openxlsx::createStyle(numFmt = "#,##0")
+
+# Create and save the excel file
+titles = paste0('Number and percentage of students split by their scores/demographics in ', stage_column, ' and ', describer_columns)
+wb <- openxlsx::createWorkbook()
+for(i in 1:length(breakdown)){
+  values_og = breakdown[[i]]
+  show_table = values_og[,-ncol(values)]
+  names(show_table)[3:5] = c('Total students', paste0('Percentage of ', describer ),  paste0('Percentage of ', stage_column))
+  if(!do_SDC){
+    show_table[[4]] = show_table[[4]] |> round(2)
+    show_table[[5]] = show_table[[5]] |> round(2)  
+  }
+  
+  sheet = describer_columns[i]
+  openxlsx::addWorksheet(wb, sheet)
+  openxlsx::writeData(wb, sheet, x = titles[i], startRow = 1, startCol = 1)
+  openxlsx::writeDataTable(wb,
+                           sheet = sheet,
+                           x = show_table,
+                           startRow = 4,
+                           rowNames = FALSE,
+                           withFilter = TRUE)
+  openxlsx::addStyle(wb = wb, sheet = sheet, rows = 1, cols = 1, style = main_title)
+  openxlsx::addStyle(wb = wb, sheet = sheet, rows = 2, cols = 1, style = second_title)
+  openxlsx::addStyle(wb = wb, sheet = sheet, rows = 4:(nrow(show_table)+4), cols = 3, style = student_count)
+  openxlsx::setColWidths(wb, sheet=sheet, cols = 2:5, widths = 'auto')
+  
+}
+
+
+# Save workbook
+openxlsx::saveWorkbook(wb,  file = paste0(output_dir,'/_',report_name, '_stage_composition.xlsx'), overwrite = TRUE)
+```
+This report analyses the composition of **`r stage_column`** and in particular we analyses the affect of **`r paste0(describer_columns, collapse = ', ')`** on the composition. 
+
+Within the data we have **`r total_students`** students in total. Of these students **`r missing_stage`** (`r (missing_stage/ total_students *100) |> round(2)`%) have missing `r stage_column` information. 
+
+Let's begin by looking at the composition of **`r stage_column`** across all students.
+
+```{r all students table}
+stage_table |>  DT::datatable(#extensions = 'Buttons',
+                rownames = FALSE,
+                options = list(scrollX = TRUE,
+                               pageLength = nrow(stage_table),
+                               dom = 't',
+                               #buttons = c('copy', 'csv', 'excel', 'pdf'),
+                               paging=FALSE,
+                               ordering=F))
+```
+
+In the following sections we explore the the interplay between `r stage_column` and `r describer_columns`.
+
+***
+
+<!-- Loop over all describer columns and add the information  -->
+
+```{r breakdown by describers, results='asis'}
+knit_child_with_params <- function(p) {
+  params <- p
+  knitr::knit_child(
+    "child.rmd",
+    envir = environment(),
+    quiet = TRUE)
+}
+
+# This needs to be declared outside the function
+input = list()
+for(i in 1:length(describer_columns)){
+  input[[i]] = list(breakdown = breakdown[[i]])
+}
+names(input) = describer_columns
+
+
+# res = knit_child_with_params(input[[2]])
+          
+res <- lapply(input, knit_child_with_params)
+# counter = 0
+# res <- lapply(params, function(x){
+#   counter <<- counter + 1
+#   print(counter)
+#  knit_child_with_params(x) 
+# })
+
+
+cat(unlist(res), sep = '\n')
+```

@@ -4,7 +4,7 @@
 \alias{pathway_to_links}
 \title{A function that converts pathways to sankey diagram information.}
 \usage{
-pathway_to_links(pathways, links_as_pos = TRUE, remove_na = T)
+pathway_to_links(pathways, links_as_pos = TRUE, remove_na = T, ...)
 }
 \arguments{
 \item{pathways}{pathways}
@@ -12,6 +12,8 @@ pathway_to_links(pathways, links_as_pos = TRUE, remove_na = T)
 \item{links_as_pos}{links_as_pos}
 
 \item{remove_na}{remove_na Flag (TRUE/FALSE) for whether NA values are removed.}
+
+\item{...}{arguments to `SDC_to_links()`.}
 }
 \value{
 links

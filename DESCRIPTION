@@ -11,15 +11,16 @@ LazyData: true
 Imports: 
     colorspace,
     dplyr,
-    DT,
     htmlwidgets,
     networkD3,
     openxlsx,
+    plyr,
     stats,
     stringr,
     tibble
 RoxygenNote: 7.2.3
 Suggests: 
+    DT,
     rmarkdown,
     viridis
 URL: https://jakepowellcubg.github.io/LStools/
