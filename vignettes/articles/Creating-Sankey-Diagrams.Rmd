@@ -39,7 +39,7 @@ Within the data each row contains information about an individual student, in ou
 
 We show the first 10 rows of the data below
 
-`r DT::datatable(raw[1:10,], , rownames = FALSE, options = list(scrollX = TRUE,pageLength = nrow(10), dom = 'tp', paging=FALSE))`
+`r DT::datatable(raw[1:10,], rownames = FALSE, options = list(scrollX = TRUE,pageLength = nrow(10), dom = 'tp', paging=FALSE))`
 
 We want to be able to visualise the data via a sankey diagram from KS1 to A-levels. The first step is to convert the individual student data (contained in `raw`) to 'pathways', using the function `raw_to_pathway()` which details the number of students who have unique demographics and paths through the pipeline.
 

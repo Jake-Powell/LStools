@@ -1,5 +1,4 @@
-
-#'  create_stage_composition()
+#'  create_stage_composition_report()
 #'
 #' Creates a markdown report looking at the composition of an individual stage.
 #'
@@ -22,7 +21,7 @@
 #'
 #' @export
 #'
-create_stage_composition <- function(raw,
+create_stage_composition_report <- function(raw,
                                      stage_column,
                                      describer_columns,
                                      do_SDC = FALSE,

@@ -176,8 +176,8 @@ titles = paste0('Number and percentage of students split by their scores/demogra
 wb <- openxlsx::createWorkbook()
 for(i in 1:length(breakdown)){
   values_og = breakdown[[i]]
-  show_table = values_og[,-ncol(values)]
-  names(show_table)[3:5] = c('Total students', paste0('Percentage of ', describer ),  paste0('Percentage of ', stage_column))
+  show_table = values_og[,-ncol(values_og)]
+  names(show_table)[3:5] = c('Total students', paste0('Percentage of ', describer_columns[i] ),  paste0('Percentage of ', stage_column))
   if(!do_SDC){
     show_table[[4]] = show_table[[4]] |> round(2)
     show_table[[5]] = show_table[[5]] |> round(2)  

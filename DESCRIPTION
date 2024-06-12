@@ -21,6 +21,8 @@ Imports:
 RoxygenNote: 7.2.3
 Suggests: 
     DT,
+    knitr,
     rmarkdown,
     viridis
 URL: https://jakepowellcubg.github.io/LStools/
+VignetteBuilder: knitr

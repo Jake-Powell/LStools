@@ -1,9 +1,0 @@
----
-tag: "Child document"
-title: "Child document"
----
-
-## `r child_section_title`
-
-This section changes title according to what `child_section_title` value
-is in the main markdown document.
