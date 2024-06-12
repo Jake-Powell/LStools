@@ -7,6 +7,9 @@
     <loc>https://jakepowellcubg.github.io/LStools/articles/Creating-Sankey-Diagrams.html</loc>
   </url>
   <url>
+    <loc>https://jakepowellcubg.github.io/LStools/articles/Creating_simple_reports.html</loc>
+  </url>
+  <url>
     <loc>https://jakepowellcubg.github.io/LStools/articles/index.html</loc>
   </url>
   <url>
@@ -25,7 +28,7 @@
     <loc>https://jakepowellcubg.github.io/LStools/reference/add_column_names.html</loc>
   </url>
   <url>
-    <loc>https://jakepowellcubg.github.io/LStools/reference/create_stage_composition.html</loc>
+    <loc>https://jakepowellcubg.github.io/LStools/reference/create_stage_composition_report.html</loc>
   </url>
   <url>
     <loc>https://jakepowellcubg.github.io/LStools/reference/filter_data.html</loc>
