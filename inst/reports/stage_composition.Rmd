@@ -201,7 +201,7 @@ for(i in 1:length(breakdown)){
 
 
 # Save workbook
-openxlsx::saveWorkbook(wb,  file = paste0(output_dir,'/_',report_name, '_stage_composition.xlsx'), overwrite = TRUE)
+openxlsx::saveWorkbook(wb,  file = paste0(output_dir,'/',stage_column, '_stage_composition.xlsx'), overwrite = TRUE)
 ```
 This report analyses the composition of **`r stage_column`** and in particular we analyses the affect of **`r paste0(describer_columns, collapse = ', ')`** on the composition. 
 
@@ -209,7 +209,7 @@ Within the data we have **`r total_students`** students in total. Of these stude
 
 Let's begin by looking at the composition of **`r stage_column`** across all students.
 
-```{r all students table}
+```{r all students table, eval = report_kind == 'interactive'}
 stage_table |>  DT::datatable(#extensions = 'Buttons',
                 rownames = FALSE,
                 options = list(scrollX = TRUE,

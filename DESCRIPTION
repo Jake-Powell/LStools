@@ -15,6 +15,7 @@ Imports:
     networkD3,
     openxlsx,
     plyr,
+    readxl,
     stats,
     stringr,
     tibble

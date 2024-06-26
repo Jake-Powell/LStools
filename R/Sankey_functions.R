@@ -152,7 +152,7 @@ pathway_to_links <- function(pathways,
   }
 
   ### Apply SDC ----
-  all_links$SDC <- all_links |> SDC_to_links(...)
+  # all_links$SDC <- all_links |> SDC_to_links(...)
   ### (END) Apply SDC
 
   ### Add node and link descriptions -----
@@ -410,7 +410,7 @@ sankey_trace <- function(pathways,
     details[i] = mes
   }
   name = details
-  all_links = data.frame(all_links,name)
+  all_links$description = name
 
   # 7) Update hover information for the nodes.
   state = rep(NA,nrow(nodes))
@@ -448,7 +448,7 @@ sankey_trace <- function(pathways,
     mes = paste(mes,collapse='')
     state[i] = mes
   }
-  nodes = data.frame(nodes,state)
+  nodes$description = state
 
   # 8) prepare color scale: I give one specific color for each node.
   # my_color <- 'd3.scaleOrdinal() .domain(["type_a", "type_b", "my_unique_group"]) .range(["red", "gray", "antiquewhite"])'
@@ -470,34 +470,166 @@ sankey_trace <- function(pathways,
                                 sinksRight = F,
                                 iterations = 0,
                                 fontFamily = fontFamily,
-                                fontSize = fontSize)
+                                fontSize = fontSize) |>
+    add_node_hover_text(hovertext = nodes$description) |>
+    add_link_hover_text(hovertext = all_links$description)
 
-  # 10) Sankey with altered hover infomration for the edges.
-  p$x$links$name <- all_links$name
-  p <- htmlwidgets::onRender(
-    p,
-    '
-  function(el, x) {
-  d3.selectAll(".link").select("title foreignObject body pre")
-  .text(function(d) { return d.name; });
-  }
-  '
-  )
-
-  # 11) Sankey with altered hover infomration for  the edges.
-  p$x$nodes$state <- nodes$state
-  p <- htmlwidgets::onRender(
-    p,
-    '
-            function(el, x) {
-                d3.selectAll(".node").select("title foreignObject body pre")
-                .text(function(d) { return d.state; });
-            }
-            '
-  )
-
-  # return the result
   return(p)
+
+
+}
+
+#' Create sankey diagram from excel file or extracted data
+#'
+#' @param extract data frame containing the sankey information, with column  names including Source, Target and Number of Students.
+#' @param fontFamily font family for the node text labels.
+#' @param fontSize numeric font size in pixels for the node text labels.
+#' @param filepath filepath to the .xlsx file containing the sankey diagram information. Assume the first 3 rows are to be removed but this can be altered with the `skip` input.
+#' @param skip Number of rows to be skipped when loading the excel file.
+#'
+#' @return sankey diagram
+#' @export
+#'
+sankey_from_extract <- function(filepath = NULL,
+                                extract = NULL,
+                                fontFamily = NULL,
+                                skip = 3,
+                                fontSize = 7){
+  # Get the links and nodes from the file or extract data.frame.
+  data = links_from_extract(filepath = filepath,
+                     extract = extract,
+                     skip = skip)
+
+  nodes = data$nodes ; all_links = data$links
+
+  # if group is in all_links then we have a traced plot otherwise we do not.
+  if(!'group' %in% names(all_links)){
+    p <- networkD3::sankeyNetwork(Links = all_links,
+                                  Nodes = nodes,
+                                  Source = "source",
+                                  Target = "target",
+                                  Value = "value",
+                                  NodeID = "names",
+                                  sinksRight = F,
+                                  iterations= 0,
+                                  fontFamily = fontFamily,
+                                  fontSize = fontSize)
+    # ...) |>
+    # add_node_hover_text(hovertext = nodes$description) |>
+    # add_link_hover_text(hovertext = all_links$description)
+
+    return(p)
+  }
+
+  if('group' %in% names(all_links)){
+    nodes$group = "my_unique_group"
+    new_group = rep('type_b', nrow(all_links))
+    new_group[all_links$group == 'Yes'] = 'type_a'
+    all_links$group  = new_group
+    colors = c("red", "gray", "antiquewhite")
+    my_color <- paste0('d3.scaleOrdinal() .domain(["type_a", "type_b", "my_unique_group"]) .range([',
+                       paste(shQuote(colors, type="cmd"), collapse=", "),'])' )
+
+    all_links = all_links[all_links$value != '0',]
+
+    p <- networkD3::sankeyNetwork(Links = all_links,
+                                  Nodes = nodes,
+                                  Source = "source",
+                                  Target = "target",
+                                  Value = "value",
+                                  NodeID = "names",
+                                  colourScale=my_color,
+                                  LinkGroup="group",
+                                  NodeGroup="group",
+                                  sinksRight = F,
+                                  iterations = 0,
+                                  fontFamily = fontFamily,
+                                  fontSize = fontSize)
+    # ...) |>
+    # add_node_hover_text(hovertext = nodes$description) |>
+    # add_link_hover_text(hovertext = all_links$description)
+
+    return(p)
+  }
+
+}
+
+#' Get node and links from excel file or extracted data
+#'
+#' @param extract data frame containing the sankey information, with column  names including Source, Target and Number of Students.
+#' @param filepath filepath to the .xlsx file containing the sankey diagram information. Assume the first 3 rows are to be removed but this can be altered with the `skip` input.
+#' @param skip Number of rows to be skipped when loading the excel file.
+#'
+#' @return list containing nodes and links
+#' @export
+#'
+links_from_extract <- function(filepath = NULL,
+                                extract = NULL,
+                                skip = 3){
+  if(is.null(extract) & !is.null(filepath)){
+    extract = readxl::read_xlsx(path = filepath, skip = skip)
+  }
+  if(is.null(extract)){
+    stop('Error! issue with inputted filepath or extract.')
+  }
+
+  extract <- extract |> as.data.frame()
+
+  ### Need to know if we are doing a traced sankey or a filtered sankey.
+  ### If the extract has 3 columns then it's a filtered sankey if it has 4 columns it's a traced sankey.
+
+  # Filtered
+  if(ncol(extract) == 3){
+    # A) Get the nodes
+    nodes = unique(unlist(extract[c('Source', 'Target')]))
+    nodes
+
+    # B) Create all_links with correct format.
+    all_links = extract
+    names(all_links) = c('source','target','value')
+    for(i in 1:length(nodes)){
+      match1 = which(!is.na(match(extract[,1],nodes[i])))
+      match2 = which(!is.na(match(extract[,2],nodes[i])))
+      if(length(match1)>0){
+        all_links[match1,1] = i-1
+      }
+      if(length(match2)>0){
+        all_links[match2,2] = i-1
+      }
+    }
+    all_links[,1] = as.numeric(all_links[,1])
+    all_links[,2] = as.numeric(all_links[,2])
+    nodes = data.frame(names = nodes) # turn nodes into a data frame.
+
+    return(list(nodes = nodes, links = all_links))
+  }
+
+  # Traced
+  if(ncol(extract) == 4){
+    names(extract) = c('group', 'source', 'target', 'value')
+    # A) Get the nodes
+    nodes = unique(unlist(extract[c('source', 'target')]))
+    nodes
+
+    # B) Create all_links with correct format.
+    all_links = extract[c('source', 'target', 'value')]
+    for(i in 1:length(nodes)){
+      match1 = which(!is.na(match(extract[['source']],nodes[i])))
+      match2 = which(!is.na(match(extract[['target']],nodes[i])))
+      if(length(match1)>0){
+        all_links[match1,1] = i-1
+      }
+      if(length(match2)>0){
+        all_links[match2,2] = i-1
+      }
+    }
+    all_links[,1] = as.numeric(all_links[,1])
+    all_links[,2] = as.numeric(all_links[,2])
+    all_links$group = extract$group
+    nodes = data.frame(names = nodes) # turn nodes into a data frame.
+
+    return(list(nodes = nodes, links = all_links))
+  }
 
 
 }

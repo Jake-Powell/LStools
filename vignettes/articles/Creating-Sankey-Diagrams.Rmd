@@ -8,12 +8,13 @@ knitr::opts_chunk$set(
   comment = "#>"
 )
 requireNamespace("viridis", quietly = TRUE)
-
+library(networkD3)
+library(htmlwidgets)
 ```
 
 ```{r setup}
 library(LStools)
-library(htmlwidgets)
+
 ```
 
 *In this vignette we show how to use the LStools package to create sankey diagrams of the educational pipeline*
@@ -123,7 +124,8 @@ p |> update_node_title(titles = c("Level 3+", "Level 2A", "Level 2B", "Level 2C-
                        "Level 6", "Level 5+", "Level 5-", "Level 4", "Level 3-",
                        "Grade 8","Grade 9",
                        "Maths + Further", "Maths", "No Maths" ))
-
+```
+```{r, customise plot options - color}
 # Change the colour scheme where the links correspond to the node values (doesn't show in Rmarkdown)
 p |> update_sankey_colour(colors_node =  viridis::magma(length(p |> get_nodes())),
                           type = 'source') 
@@ -134,7 +136,7 @@ col = rep('gray', p |> get_links() |> length())
 col[c(1,5,10)] = 'orange'
 col[c(2,25,20)] = 'green'  
 
-p |> update_sankey_colour(colors_node = viridis::magma(length(p |> get_nodes())),
+q = p |> update_sankey_colour(colors_node = viridis::magma(length(p |> get_nodes())),
                                 colors_link = col)
 ```
 
@@ -177,4 +179,5 @@ Or to save the underlying information in the sankey diagram to formatted .xlsx f
 
 ```
 
+You can recreate the sankey diagrams (or return a list of nodes and links required for sankey diagrams) from the exported .xlsx files by using the `sankey_from_extract()` ( or `links_from_extract()`).
 
