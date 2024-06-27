@@ -1,0 +1,92 @@
+---
+title: "Creating simple tables"
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(LStools)
+```
+
+*This vignette shows how to use the LStools package to create composition tables of variables from educational data, whether used for outputs or sanity checks within the SRS`*
+
+To use the function we require some raw data, where each row corresponds to a unique student. We generate some data below where we have columns for Free school meal (FSM) status, maths grades at KS1, KS2 and GCSE and whether the student does a-level maths (or further maths).
+
+```{r, echo = T}
+set.seed(33)
+KS1 = sample(c('3+','2A','2B', '2C-'), 10000, replace = T, prob = c(.21,.28,.26,.25))
+KS2 = sample(c('6','5+', '5-','4','3-'), 10000, replace = T, prob = c(0.03, 0.15, 0.22, 0.46, 0.13))
+GCSE = sample(c('9','8', '7', '6-'), 10000, replace = T, prob = c(0.03, 0.07, 0.10, 0.80))
+A_level =  sample(c('Maths + Further',  'Maths', 'No Maths'), 10000, replace = T, prob = c(0.02, 0.09, 0.89))
+FSM = sample(c('Yes', 'No'), 10000, replace = T, prob = c(.238, 1-.238))
+
+raw = data.frame(FSM = factor(FSM),
+                 KS1 = factor(KS1, levels = c('3+','2A','2B', '2C-')),
+                 KS2 = factor(KS2, levels = c('6','5+', '5-','4','3-')),
+                 GCSE= factor(GCSE, levels = c('9','8', '7', '6-')), 
+                 A_level = factor(A_level, levels = c('Maths + Further',  'Maths', 'No Maths')))
+```
+
+`r DT::datatable(raw[1:10,], , rownames = FALSE, options = list(scrollX = TRUE,pageLength = nrow(10), dom = 'tp', paging=FALSE))`
+
+Note that I have factored the data in such a way that the grades are ordered from highest to lowest for each column (where applicable), this isn't required but will affect the ordering of values in the outputted tables. 
+
+Generally, we work with pathways which is a simplified form of the raw data consisting of only the unique combinations of values across all columns together with the number of students who follow each set of values.
+
+```{r, echo = T}
+pathways = LStools::raw_to_pathway(raw)
+```
+
+The first 10 rows of pathways are shown below
+
+`r DT::datatable(pathways[1:10,], , rownames = FALSE, options = list(scrollX = TRUE,pageLength = nrow(10), dom = 'tp', paging=FALSE))`
+
+### Composition of columns
+
+Within LStools `pathway_summary_columns()` provides a useful sanity check is to look at the composition of each column within pathways, to check if for errors potentially created during the cleaning stage. The function creates a list of data frames for each column within pathways detailing the number and percentage of students split by the values in the column.
+
+```{r}
+composition_columns = pathways |> LStools::pathway_summary_columns()
+composition_columns
+```
+
+***
+
+### Composition tables
+
+A common output from the SRS will be composition tables of stages of the maths pipeline. For example GCSE maths grades split by demographics of students. 
+
+Within LStools `pathway_composition_tables()` can be used to create the composition tables for multiple stages across multiple demographic columns within pathways.
+
+```{r, create composition table}
+composition_by_FSM_KS1 = pathways |> pathway_composition_tables(describers = c('FSM','KS1'), stages = c('KS2', 'GCSE'))
+composition_by_FSM_KS1
+```
+
+Prior to outputting from the SRS we need to apply statistical disclosure control which can be turned on via a toggle in `pathway_composition_tables()`.
+
+```{r create composition table with SDC}
+composition_by_FSM_KS1_SDC = pathways |> pathway_composition_tables(describers = c('FSM','KS1'), stages = c('KS2', 'GCSE'),do_SDC = TRUE) # By default SDC is turned off (FALSE).
+composition_by_FSM_KS1_SDC
+```
+
+We can then save the composition table to excel ready to be checked for output. We will use `data_frame_to_workbook()` to allow each stage of the composition table to be unique sheets within an xlsx workbook each with an individual title and source information.
+
+```{r save composition table, eval = FALSE}
+data_frame_to_workbook(data = composition_by_FSM_KS1_SDC$KS2,
+                            sheet = 'KS2',
+                            title = 'Composition of KS2 maths grade by FSM status and KS1 maths grade',
+                            source = 'Source: National Pupil Database') |>
+  data_frame_to_workbook(data = composition_by_FSM_KS1_SDC$GCSE,
+                              sheet = 'GCSE',
+                              title = 'Composition of GCSE maths grade by FSM status and KS1 maths grade',
+                              source = 'Source: National Pupil Database') |>
+  openxlsx::saveWorkbook(file = 'composition.xlsx', overwrite = TRUE)
+```
+
+***
