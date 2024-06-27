@@ -14,6 +14,7 @@ values = values[values[,3] != '-',]
 for(i in 3:5){
   values[[i]] = values[[i]] |> as.numeric()
 }
+
 # Create horizontal bar plot grouped by stage values.
 fig1 = plotly::plot_ly(data = values,
                 x = ~percent_stage,
@@ -21,24 +22,35 @@ fig1 = plotly::plot_ly(data = values,
                 color = values[[2]],
                 type = 'bar',
                 orientation = 'h',
-                legendgrouptitle = list(text = describer)) |>
+                customdata =  values[[2]],
+                hovertemplate = '%{customdata}: %{x}% <extra></extra>',
+                marker =list(hoverformat ="%{2}f")
+                ) |>
   layout(barmode = 'stack',
          yaxis = list(title = stage),
-         xaxis = list(title = 'Percentage of Students')
+         xaxis = list(title = 'Percentage of students'),
+         hovermode = 'y unified',
+         legend = list(title = list(text = describer) )
          )
 
 data_cur = values[values[[1]] != 'All',]
 fig2 = plotly::plot_ly(data = data_cur,
-                x = ~percent_describer,
-                y = data_cur[[2]],
-                color = data_cur[[1]],
-                type = 'bar',
-                orientation = 'h',
-                legendgrouptitle = list(text = stage)) |>
-  layout(barmode = 'stack',
-         yaxis = list(title = describer),
-         xaxis = list(title = 'Percentage of Students')
-         )
+                       x = ~percent_describer,
+                       y = data_cur[[2]],
+                       color = data_cur[[1]],
+                       type = 'bar',
+                       customdata =  data_cur[[1]],
+                       orientation = 'h',
+                       hovertemplate = '%{customdata}: %{x}% <extra></extra>',
+                       marker =list(hoverformat ="%{2}f")
+                       ) |>
+                         layout(barmode = 'stack',
+                                yaxis = list(title = describer),
+                                xaxis = list(title = 'Percentage of students'),
+                                hovermode = 'y unified',
+                                legend = list(title = list(text = describer) )
+                                
+                         )
 
 show_table = values_og[,-ncol(values)]
 names(show_table)[3:5] = c('Total students', paste0('Percentage of ', describer ),  paste0('Percentage of ', stage))

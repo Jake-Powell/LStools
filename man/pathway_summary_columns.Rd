@@ -2,7 +2,7 @@
 % Please edit documentation in R/pathway_functions.R
 \name{pathway_summary_columns}
 \alias{pathway_summary_columns}
-\title{Title}
+\title{Composition of pathways by columns}
 \usage{
 pathway_summary_columns(pathways, convert_na = T)
 }

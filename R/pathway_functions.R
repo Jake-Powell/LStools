@@ -153,7 +153,7 @@ pathway_remove_columns <- function(pathways,
 }
 
 
-#' Title
+#' Composition of pathways by columns
 #'
 #' A function to get the summary of each column in pathways. I.e the Number of students in each stage/describer and how their split.
 #'
@@ -213,9 +213,9 @@ pathway_summary_columns <- function(pathways, convert_na = T){
 
 #' A function to get the summary of the describers at each stage of the pipeline.
 #'
-#' @param pathways pathways
-#' @param describers describers
-#' @param stages stages
+#' @param pathways data frame containing pathways.
+#' @param describers A character vector of column names in pathways which we want to describe the stages (such as FSM, Sex, IDACI, etc)
+#' @param stages A character vector of column names in pathways we split by the columns given in describers. (columns such as KS1, KS2, etc)
 #'
 #' @export
 #'
@@ -275,3 +275,110 @@ pathway_summary_describers_at_stages <- function(pathways, describers, stages){
   names(output) = describers
   return(output)
 }
+
+#' A function to get the summary of the describers at each stage of the pipeline.
+#'
+#' @param pathways data frame containing pathways.
+#' @param describers A character vector of column names in pathways which we want to describe the stages (such as FSM, Sex, IDACI, etc)
+#' @param stages A character vector of column names in pathways we split by the columns given in describers. (columns such as KS1, KS2, etc)
+#' @param do_SDC Flag (TRUE/FALSE) for whether statistical disclosure is performed.
+#' @param round_to number to round to
+#' @param issue_level number, where values with fewer students have their value omitted (set to "-").
+#'
+#' @export
+#'
+pathway_composition_tables <- function(pathways,
+                                       describers,
+                                       stages,
+                                       do_SDC = FALSE,
+                                       round_to = 10,
+                                       issue_level = 5){
+
+  # 1) check the describers and stages correspond to columns of pathways.
+  describer_indices = match(describers, names(pathways))
+  stage_indices = match(stages, names(pathways))
+  if(any(is.na(describer_indices)) || any(is.na(stage_indices))){
+    issue_columns = c(describers[which(is.na(describer_indices))], stages[which(is.na(stage_indices))])
+    mes = paste0('Error! The following describers/stages are not names of columns in pathways: ', paste0(issue_columns,collapse = ', '), '.', collapse='')
+    stop(mes)
+  }
+
+  # 2) strip pathways to only the columns of interest.
+  all_columns = names(pathways)[-length(names(pathways))]
+  wanted = c(describers, stages)
+  not_needed = all_columns[!all_columns %in% wanted]
+  if(length(not_needed) > 0){
+    pathways_stripped = pathway_remove_columns(pathways,not_needed)
+  } else{pathways_stripped = pathways}
+  stripped_names = names(pathways_stripped)[-length(names(pathways_stripped))]
+
+  # 3) Create the output.
+  output = list()
+  # Loop over stages
+  for(i in 1:length(stages)){
+    stage_cur = stages[i]
+    stage_cur
+
+    stage_table = NULL
+    #Loop over describers
+    for(j in 1:length(describers)){
+      describer_cur = describers[j]
+      describer_cur
+      path_cur = pathway_remove_columns(pathways_stripped,stripped_names[!stripped_names %in% c(describer_cur, stage_cur)])
+      path_cur = path_cur[c(describer_cur, stage_cur, 'No_students')]
+      #Convert path_cur to a table of rows describer_cur, columns stage_cur
+      tab = matrix(NA, nrow = length(unique(path_cur[,1])), ncol = length(unique(path_cur[,2])))
+      rownames(tab) = unique(path_cur[,1]) ; colnames(tab) = unique(path_cur[,2])
+      path_cur[,1] = factor(path_cur[,1]) ; path_cur[,2] = factor(path_cur[,2])
+      indices = cbind(as.numeric(path_cur[,1]), as.numeric(path_cur[,2]))
+      for(kk in 1:nrow(path_cur)){
+        tab[indices[kk,1],indices[kk,2]] = path_cur[kk,3]
+      }
+      # Add total crow/olumns?
+      tab = rbind(tab, colSums(tab)) ; tab = cbind(tab, rowSums(tab))
+
+      #Save to list
+      name_for_tab = colnames(tab) ; name_for_tab[length(name_for_tab)] = 'Total'
+      tab_new = tab[-nrow(tab),] |> data.frame()
+      tab_new = data.frame(describer = describer_cur, level = rownames(tab_new), tab_new)
+      names(tab_new) = c('describer', 'level', name_for_tab)
+      rownames(tab_new) = NULL
+      stage_table = rbind(stage_table, tab_new)
+
+    }
+
+    # Apply SDC
+    if(do_SDC){
+      for(ii in 3:ncol(stage_table)){
+        stage_table[,ii] = stage_table[,ii] |>  apply_SDC(round_to = round_to, issue_level = issue_level)
+      }
+
+    }
+    output[[i]] = stage_table
+  }
+  names(output) = stages
+  return(output)
+}
+
+
+#' A function to get the summary of the describers at each stage of the pipeline.
+#'
+#' @param pathways data frame containing pathways.
+#' @param describers A character vector of column names in pathways which we want to describe the stages (such as FSM, Sex, IDACI, etc)
+#' @param stages A character vector of column names in pathways we split by the columns given in describers. (columns such as KS1, KS2, etc), note here that the order of stages need to be in chronological order.
+#'
+#' @export
+#'
+pathway_stage_transition_by_describer <- function(pathways, describers, stages){
+  pathways = pathways |> as.data.frame() |>remove.factors()
+  # 1) Get all transitions between stages.
+  transitions = NULL
+  for(i in 1:(length(stages)-1)){
+    pre = pathways[stages[i]] |> as.vector() |> unlist()
+    post = pathways[stages[i+1]] |> as.vector() |> unlist()
+    transitions_cur = paste0(stages[i], ': ', pre, ' -> ', stages[i+1], ': ', post) |> unique()
+  }
+
+}
+
+
