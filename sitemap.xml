@@ -28,10 +28,13 @@
     <loc>https://jakepowellcubg.github.io/LStools/reference/add_column_names.html</loc>
   </url>
   <url>
+    <loc>https://jakepowellcubg.github.io/LStools/reference/apply_SDC.html</loc>
+  </url>
+  <url>
     <loc>https://jakepowellcubg.github.io/LStools/reference/create_stage_composition_report.html</loc>
   </url>
   <url>
-    <loc>https://jakepowellcubg.github.io/LStools/reference/data_frame_to_excel.html</loc>
+    <loc>https://jakepowellcubg.github.io/LStools/reference/data_frame_to_xlsx.html</loc>
   </url>
   <url>
     <loc>https://jakepowellcubg.github.io/LStools/reference/filter_data.html</loc>
@@ -46,7 +49,13 @@
     <loc>https://jakepowellcubg.github.io/LStools/reference/links_from_extract.html</loc>
   </url>
   <url>
+    <loc>https://jakepowellcubg.github.io/LStools/reference/pathway_composition_tables.html</loc>
+  </url>
+  <url>
     <loc>https://jakepowellcubg.github.io/LStools/reference/pathway_remove_columns.html</loc>
+  </url>
+  <url>
+    <loc>https://jakepowellcubg.github.io/LStools/reference/pathway_stage_transition_by_describer.html</loc>
   </url>
   <url>
     <loc>https://jakepowellcubg.github.io/LStools/reference/pathway_summary_columns.html</loc>
