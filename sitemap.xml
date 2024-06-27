@@ -10,6 +10,9 @@
     <loc>https://jakepowellcubg.github.io/LStools/articles/Creating_simple_reports.html</loc>
   </url>
   <url>
+    <loc>https://jakepowellcubg.github.io/LStools/articles/creating_simple_tables.html</loc>
+  </url>
+  <url>
     <loc>https://jakepowellcubg.github.io/LStools/articles/index.html</loc>
   </url>
   <url>
@@ -32,6 +35,9 @@
   </url>
   <url>
     <loc>https://jakepowellcubg.github.io/LStools/reference/create_stage_composition_report.html</loc>
+  </url>
+  <url>
+    <loc>https://jakepowellcubg.github.io/LStools/reference/data_frame_to_workbook.html</loc>
   </url>
   <url>
     <loc>https://jakepowellcubg.github.io/LStools/reference/data_frame_to_xlsx.html</loc>
