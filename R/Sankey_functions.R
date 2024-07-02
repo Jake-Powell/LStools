@@ -289,7 +289,7 @@ sankey_filtered <- function(pathways,
 
   }
 
-  # 2) Convert Pathwats to sankey data.
+  # 2) Convert Pathways to sankey data.
   Links_filtered = pathway_to_links(pathways_filtered[,c(flow_columns,ncol(pathways))],...)
   all_links = Links_filtered$links ; nodes = Links_filtered$nodes
 
@@ -479,6 +479,97 @@ sankey_trace <- function(pathways,
 
 }
 
+
+#' Create sankey diagram where we show flow across multiple groups (using a single column)
+#'
+#' @param pathways student pathways with number of students.
+#' @param flow_columns Column names (or index) of the 'stages' in pathways that we want to create a sankey diagram of.
+#' @param group_column the name (or index) of the group column
+#' @param fontFamily font family for the node text labels.
+#' @param fontSize numeric font size in pixels for the node text labels.
+#' @param do_SDC Flag (TRUE/FALSE) for whether you want to do SDC via the `SDC_to_links()` function.
+#' @param ... arguments to `SDC_to_links()` or `networkD3::sankeyNetwork()`.
+#' @param colors a character vector of length at least the number of groups to colour the edges in the sankey diagram
+#'
+#' @return sankey diagram
+#' @export
+#'
+sankey_trace_groups <- function(pathways,
+                            flow_columns,
+                            group_column,
+                            fontFamily = NULL,
+                            fontSize = 7,
+                            do_SDC = FALSE,
+                            colors = viridis::viridis(10),
+                            ...){
+  # A1) Check whether flow columns are text or indices.
+  if(!is.numeric(flow_columns)){
+    # Flow columns is not numeric assume text, need to find the indices.
+    flow_columns = match(flow_columns,names(pathways))
+    if(any(is.na(flow_columns))){
+      stop('Inputted text flow columns. At least one does not match names of pathways.')
+    }
+  }
+  # A2) Check whether group column is text or index
+  if(!is.numeric(group_column)){
+    # Flow columns is not numeric assume text, need to find the indices.
+    group_column = match(group_column,names(pathways))
+    if(is.na(group_column)){
+      stop('Inputted text group column does not match any names of pathways.')
+    }
+  }
+  group_column_name = names(pathways)[group_column]
+
+
+  # 1) Find the number of values in group_column and create links for each
+  group_values = levels(pathways[[group_column]])
+  links_groups = lapply(group_values, function(x){
+    pathways_cur = pathways[pathways[[group_column]] == x,]
+    pathway_to_links(pathways_cur[,c(flow_columns,ncol(pathways_cur))])
+  })
+  names(links_groups) = group_values
+
+  # 2) Merge the list of links for group values into a single links.
+  all_nodes = lapply(links_groups, function(x){x$nodes$names}) |> unlist() |> unique()
+  counter = 0
+  all_links = lapply(links_groups, function(x){
+    counter <<- counter + 1
+    links = x$links ; nodes = x$nodes$names
+    new_node_id = match(nodes, all_nodes)-1
+    for(i in 0:(length(new_node_id)-1)){
+      if(i != new_node_id[i+1]){
+        links$source[links$source == i] = new_node_id[i+1]
+        links$target[links$target == i] = new_node_id[i+1]
+      }
+    }
+    links$group = group_values[counter]
+    links$color = colors[counter]
+    links$description = paste0(group_column_name, ' = ',group_values[counter],' \n\n', links$description)
+    links
+    })
+  all_links = do.call(rbind, all_links)
+  all_nodes = data.frame(names = all_nodes)
+
+
+  # 4) Create sankey diagram.
+  p <- networkD3::sankeyNetwork(Links = all_links,
+                                Nodes = all_nodes,
+                                Source = "source",
+                                Target = "target",
+                                Value = "value",
+                                NodeID = "names",
+                                sinksRight = F,
+                                iterations= 0,
+                                fontFamily = fontFamily,
+                                fontSize = fontSize,
+                                ...) |>
+    add_link_hover_text(hovertext = all_links$description)
+  p = p |>  update_sankey_colour(colors_node = rep('gray',nrow(all_nodes)), colors_link = all_links$color, type = 'target', link_alpha = 1)
+
+
+  return(p)
+}
+
 #' Create sankey diagram from excel file or extracted data
 #'
 #' @param extract data frame containing the sankey information, with column  names including Source, Target and Number of Students.
@@ -521,35 +612,63 @@ sankey_from_extract <- function(filepath = NULL,
     return(p)
   }
 
+  # If group is in all_links
   if('group' %in% names(all_links)){
-    nodes$group = "my_unique_group"
-    new_group = rep('type_b', nrow(all_links))
-    new_group[all_links$group == 'Yes'] = 'type_a'
-    all_links$group  = new_group
-    colors = c("red", "gray", "antiquewhite")
-    my_color <- paste0('d3.scaleOrdinal() .domain(["type_a", "type_b", "my_unique_group"]) .range([',
-                       paste(shQuote(colors, type="cmd"), collapse=", "),'])' )
+    # If we only have two values using Yes and No then we have a traced plot.
+    if(all(all_links$group %in% c('Yes', 'No') )){
+      nodes$group = "my_unique_group"
+      new_group = rep('type_b', nrow(all_links))
+      new_group[all_links$group == 'Yes'] = 'type_a'
+      all_links$group  = new_group
+      colors = c("red", "gray", "antiquewhite")
+      my_color <- paste0('d3.scaleOrdinal() .domain(["type_a", "type_b", "my_unique_group"]) .range([',
+                         paste(shQuote(colors, type="cmd"), collapse=", "),'])' )
 
-    all_links = all_links[all_links$value != '0',]
+      all_links = all_links[all_links$value != '0',]
 
-    p <- networkD3::sankeyNetwork(Links = all_links,
-                                  Nodes = nodes,
-                                  Source = "source",
-                                  Target = "target",
-                                  Value = "value",
-                                  NodeID = "names",
-                                  colourScale=my_color,
-                                  LinkGroup="group",
-                                  NodeGroup="group",
-                                  sinksRight = F,
-                                  iterations = 0,
-                                  fontFamily = fontFamily,
-                                  fontSize = fontSize)
-    # ...) |>
-    # add_node_hover_text(hovertext = nodes$description) |>
-    # add_link_hover_text(hovertext = all_links$description)
+      p <- networkD3::sankeyNetwork(Links = all_links,
+                                    Nodes = nodes,
+                                    Source = "source",
+                                    Target = "target",
+                                    Value = "value",
+                                    NodeID = "names",
+                                    colourScale=my_color,
+                                    LinkGroup="group",
+                                    NodeGroup="group",
+                                    sinksRight = F,
+                                    iterations = 0,
+                                    fontFamily = fontFamily,
+                                    fontSize = fontSize)
+      # ...) |>
+      # add_node_hover_text(hovertext = nodes$description) |>
+      # add_link_hover_text(hovertext = all_links$description)
 
-    return(p)
+      return(p)
+    }else{
+      # We have a multi-trace plot using a group column
+
+      #Set colour for links
+      color = rep(NA, nrow(all_links))
+      group_values = all_links$group |> unique()
+      colours_palette = viridis::viridis(length(group_values))
+      for(i in 1:length(group_values)){
+        color[which(all_links$group == group_values[i])] = colours_palette[i]
+      }
+
+      p <- networkD3::sankeyNetwork(Links = all_links,
+                                    Nodes = nodes,
+                                    Source = "source",
+                                    Target = "target",
+                                    Value = "value",
+                                    NodeID = "names",
+                                    sinksRight = F,
+                                    iterations = 0,
+                                    fontFamily = fontFamily,
+                                    fontSize = fontSize)
+      p = p |>  update_sankey_colour(colors_node = rep('gray',nrow(nodes)), colors_link = color, type = 'target', link_alpha = 1)
+
+    }
+
   }
 
 }

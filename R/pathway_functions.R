@@ -361,24 +361,64 @@ pathway_composition_tables <- function(pathways,
 }
 
 
-#' A function to get the summary of the describers at each stage of the pipeline.
+#' A function to get the summary of the describers at each transition in the pipeline.
 #'
 #' @param pathways data frame containing pathways.
 #' @param describers A character vector of column names in pathways which we want to describe the stages (such as FSM, Sex, IDACI, etc)
 #' @param stages A character vector of column names in pathways we split by the columns given in describers. (columns such as KS1, KS2, etc), note here that the order of stages need to be in chronological order.
+#' @param return_type output return type, by default a list of lists of the describers nested with a list of transitions. Any other return_type value will return a compressed version of a list of data frames for each describer where the columns are the describer values and the rows the transitions.
 #'
 #' @export
 #'
-pathway_stage_transition_by_describer <- function(pathways, describers, stages){
+pathway_stage_transition_by_describer <- function(pathways, describers, stages, return_type = 'list of transitions'){
   pathways = pathways |> as.data.frame() |>remove.factors()
-  # 1) Get all transitions between stages.
-  transitions = NULL
+  out = list()
+  counter = 1
   for(i in 1:(length(stages)-1)){
-    pre = pathways[stages[i]] |> as.vector() |> unlist()
-    post = pathways[stages[i+1]] |> as.vector() |> unlist()
-    transitions_cur = paste0(stages[i], ': ', pre, ' -> ', stages[i+1], ': ', post) |> unique()
+    pre_values = pathways[[stages[i]]] |> unique()
+    post_values = pathways[[stages[i+1]]] |> unique()
+    for(pre in pre_values){
+      for(post in post_values){
+        data_subset = pathways[pathways[[stages[i]]] == pre & pathways[[stages[i+1]]] == post,
+                               match(c(describers,'No_students'), names(pathways))]
+        if(nrow(data_subset) > 0){
+          info = data_subset |>  LStools::pathway_summary_columns()
+          out[[counter]] = info
+          names(out)[counter] = paste0(stages[i], ': ', pre, ' -> ', stages[i+1], ': ', post)
+          counter <- counter + 1
+        }
+
+      }
+    }
   }
 
+  if(return_type == 'list of transitions'){
+    return(out)
+  }else{
+    out_format = list()
+    counter = 1
+    for(describer in describers){
+      # Find the unique
+      unique_values =  c(unique(pathways[[describer]]), 'Total')
+
+
+      formatted_rows =  lapply(out, function(x){
+        data_cur = x[[match(describer, describers)]]
+        no_students = rep(0, length(unique_values))
+
+        no_students[match(data_cur[,1], unique_values)] = data_cur$No_students
+        no_students |> as.numeric()
+      })
+      out_formatted = do.call(rbind,formatted_rows)
+      out_formatted = data.frame(names(out), out_formatted)
+      names(out_formatted) = c('Transition', paste0(describer, ': ',unique_values))
+      rownames(out_formatted) = 1:nrow(out_formatted)
+      out_format[[counter]] = out_formatted
+      counter = counter + 1
+    }
+    names(out_format) = describers
+    return(out_format)
+  }
 }
 
 

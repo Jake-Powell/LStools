@@ -2,9 +2,14 @@
 % Please edit documentation in R/pathway_functions.R
 \name{pathway_stage_transition_by_describer}
 \alias{pathway_stage_transition_by_describer}
-\title{A function to get the summary of the describers at each stage of the pipeline.}
+\title{A function to get the summary of the describers at each transition in the pipeline.}
 \usage{
-pathway_stage_transition_by_describer(pathways, describers, stages)
+pathway_stage_transition_by_describer(
+  pathways,
+  describers,
+  stages,
+  return_type = "list of transitions"
+)
 }
 \arguments{
 \item{pathways}{data frame containing pathways.}
@@ -12,7 +17,9 @@ pathway_stage_transition_by_describer(pathways, describers, stages)
 \item{describers}{A character vector of column names in pathways which we want to describe the stages (such as FSM, Sex, IDACI, etc)}
 
 \item{stages}{A character vector of column names in pathways we split by the columns given in describers. (columns such as KS1, KS2, etc), note here that the order of stages need to be in chronological order.}
+
+\item{return_type}{output return type, by default a list of lists of the describers nested with a list of transitions. Any other return_type value will return a compressed version of a list of data frames for each describer where the columns are the describer values and the rows the transitions.}
 }
 \description{
-A function to get the summary of the describers at each stage of the pipeline.
+A function to get the summary of the describers at each transition in the pipeline.
 }

@@ -68,8 +68,15 @@ sankey_export_xlsx <- function(p,
   sankey_type = 'filtered'
   sankey_info = p |> sankey_to_data_frame(simple = FALSE)
   if('group' %in% names(sankey_info$links)){
-    sankey_type = 'traced'
+    if('type_a' %in% sankey_info$links$group){
+      sankey_type = 'traced'
+
+    }else{
+      sankey_type = 'grouped'
+    }
   }
+
+
   # Create and export .xlsx file with underlying information for a filtered sankey diagram.
   if(sankey_type == 'filtered'){
     df = p |> sankey_to_data_frame(simple = T)
@@ -110,6 +117,43 @@ sankey_export_xlsx <- function(p,
     df$group[df$group == 'type_b'] = 'No'
     df$value = as.numeric(df$value)
     names(df) = c(paste0('In (', group_info, ')?'), 'Source', 'Target', 'Number of Students')
+
+    # Create and save the excel file
+    wb <- openxlsx::createWorkbook()
+    openxlsx::addWorksheet(wb, "Data")
+    openxlsx::writeData(wb, 1, x = title, startRow = 1, startCol = 1)
+    openxlsx::writeData(wb, 1, x = source, startRow = 2, startCol = 1)
+    openxlsx::writeDataTable(wb,
+                             sheet = "Data",
+                             x = df,
+                             startRow = 4,
+                             rowNames = FALSE,
+                             withFilter = TRUE)
+
+    openxlsx::addStyle(wb = wb, sheet = 1, rows = 1, cols = 1, style = main_title)
+    openxlsx::addStyle(wb = wb, sheet = 1, rows = 2, cols = 1, style = second_title)
+    openxlsx::addStyle(wb = wb, sheet = 1, rows = 4:(nrow(df)+4), cols = 4, style = student_count)
+    openxlsx::setColWidths(wb, sheet=1, cols = 2:4, widths = 'auto')
+    openxlsx::setColWidths(wb, sheet=1, cols = 1, widths = 15)
+    # Save workbook
+    openxlsx::saveWorkbook(wb,  file = filepath, overwrite = TRUE)
+  }
+
+  # Create and export .xlsx file with underlying information for a multi-traced (by group) sankey diagram.
+  if(sankey_type == 'grouped'){
+    sankey_info = p |> sankey_to_data_frame(simple = FALSE)
+    group_info = lapply(sankey_info$links$name, function(x){
+     split =  x |> stringr::str_split(pattern = '\n\n') |>
+        unlist()
+     split[1] |> stringr::str_trim()
+    })  |> unlist()
+   column = (group_info[1] |> stringr::str_split(pattern = ' = ') |> unlist())[1]
+   group_info = group_info |> stringr::str_remove(pattern = paste0(column, ' = '))
+
+    df = sankey_info$links[,c(1,2,3)]
+    df$value = as.numeric(df$value)
+    df = data.frame(group = group_info, df)
+    names(df) = c(column, 'Source', 'Target', 'Number of Students')
 
     # Create and save the excel file
     wb <- openxlsx::createWorkbook()

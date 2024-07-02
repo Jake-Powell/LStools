@@ -90,3 +90,36 @@ data_frame_to_workbook(data = composition_by_FSM_KS1_SDC$KS2,
 ```
 
 ***
+
+### Composition of transitions
+
+It might be of interest to explore the composition of students who 'flow' through a particular transition of the maths pipeline, such as those who achieve level 6 at KS2 who go on to achieve a grade 6 or worse at GCSE.
+
+Within LStools `pathway_stage_transition_by_describer()` can be used to extract the demographics (or other quantiites) of students at all transitions through the mathematics pipeline. 
+
+For example we can extract the FSM status of students through transitions through KS1, KS2 and GCSE with the following code
+
+```{r extract FSM transitions}
+transition_demographics = pathway_stage_transition_by_describer(pathways, describers = 'FSM', stages = c('KS1','KS2', 'GCSE'))
+# transition_demographics contains 40 transitions in a list, show only two.
+transition_demographics$`KS1: 3+ -> KS2: 6`
+transition_demographics$`KS2: 5+ -> GCSE: 9`
+```
+
+By default the output is a list of transitions where each transition has a list for the composition of each demographic. This format is useful when wanting to concentrate on a single transition. To alter the output format we can change the value of `return_type` to 'compressed' which will instead return a data frame for each demographic showing the composition of all the transitions. This format is easier to output from the SRS.
+```{r extract FSM transitions compressed output}
+transition_demographics = pathway_stage_transition_by_describer(pathways, describers = c('FSM', 'A_level'), stages = c('KS1','KS2', 'GCSE'), return_type = 'compressed')
+lapply(transition_demographics, head)
+```
+
+```{r save transition table, eval = FALSE}
+data_frame_to_workbook(data = transition_demographics$FSM,
+                            sheet = 'FSM',
+                            title = 'Transitions between KS1, KS2 and GCSE split by students FSM status',
+                            source = 'Source: National Pupil Database') |>
+  data_frame_to_workbook(data = transition_demographics$A_level,
+                              sheet = 'A-level',
+                              title = 'Transitions between KS1, KS2 and GCSE split by students A-level mathematics choices',
+                              source = 'Source: National Pupil Database') |>
+  openxlsx::saveWorkbook(file = 'transition_info.xlsx', overwrite = TRUE)
+```
