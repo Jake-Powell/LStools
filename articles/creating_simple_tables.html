@@ -231,6 +231,79 @@ workbook each with an individual title and source information.</p>
 <span>  <span class="fu">openxlsx</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/openxlsx/man/saveWorkbook.html" class="external-link">saveWorkbook</a></span><span class="op">(</span>file <span class="op">=</span> <span class="st">'composition.xlsx'</span>, overwrite <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <hr>
 </div>
+<div class="section level3">
+<h3 id="composition-of-transitions">Composition of transitions<a class="anchor" aria-label="anchor" href="#composition-of-transitions"></a>
+</h3>
+<p>It might be of interest to explore the composition of students who
+‘flow’ through a particular transition of the maths pipeline, such as
+those who achieve level 6 at KS2 who go on to achieve a grade 6 or worse
+at GCSE.</p>
+<p>Within LStools <code><a href="../reference/pathway_stage_transition_by_describer.html">pathway_stage_transition_by_describer()</a></code>
+can be used to extract the demographics (or other quantiites) of
+students at all transitions through the mathematics pipeline.</p>
+<p>For example we can extract the FSM status of students through
+transitions through KS1, KS2 and GCSE with the following code</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">transition_demographics</span> <span class="op">=</span> <span class="fu"><a href="../reference/pathway_stage_transition_by_describer.html">pathway_stage_transition_by_describer</a></span><span class="op">(</span><span class="va">pathways</span>, describers <span class="op">=</span> <span class="st">'FSM'</span>, stages <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">'KS1'</span>,<span class="st">'KS2'</span>, <span class="st">'GCSE'</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co"># transition_demographics contains 40 transitions in a list, show only two.</span></span>
+<span><span class="va">transition_demographics</span><span class="op">$</span><span class="va">`KS1: 3+ -&gt; KS2: 6`</span></span>
+<span><span class="co">#&gt; $FSM</span></span>
+<span><span class="co">#&gt;     FSM No_students % (population)</span></span>
+<span><span class="co">#&gt; 1    No          45          77.59</span></span>
+<span><span class="co">#&gt; 2   Yes          13          22.41</span></span>
+<span><span class="co">#&gt; 3 Total          58           100%</span></span></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">transition_demographics</span><span class="op">$</span><span class="va">`KS2: 5+ -&gt; GCSE: 9`</span></span>
+<span><span class="co">#&gt; $FSM</span></span>
+<span><span class="co">#&gt;     FSM No_students % (population)</span></span>
+<span><span class="co">#&gt; 1    No          23          74.19</span></span>
+<span><span class="co">#&gt; 2   Yes           8          25.81</span></span>
+<span><span class="co">#&gt; 3 Total          31           100%</span></span></code></pre></div>
+<p>By default the output is a list of transitions where each transition
+has a list for the composition of each demographic. This format is
+useful when wanting to concentrate on a single transition. To alter the
+output format we can change the value of <code>return_type</code> to
+‘compressed’ which will instead return a data frame for each demographic
+showing the composition of all the transitions. This format is easier to
+output from the SRS.</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">transition_demographics</span> <span class="op">=</span> <span class="fu"><a href="../reference/pathway_stage_transition_by_describer.html">pathway_stage_transition_by_describer</a></span><span class="op">(</span><span class="va">pathways</span>, describers <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">'FSM'</span>, <span class="st">'A_level'</span><span class="op">)</span>, stages <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">'KS1'</span>,<span class="st">'KS2'</span>, <span class="st">'GCSE'</span><span class="op">)</span>, return_type <span class="op">=</span> <span class="st">'compressed'</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">transition_demographics</span>, <span class="va">head</span><span class="op">)</span></span>
+<span><span class="co">#&gt; $FSM</span></span>
+<span><span class="co">#&gt;           Transition FSM: No FSM: Yes FSM: Total</span></span>
+<span><span class="co">#&gt; 1  KS1: 3+ -&gt; KS2: 6      45       13         58</span></span>
+<span><span class="co">#&gt; 2 KS1: 3+ -&gt; KS2: 5+     253       64        317</span></span>
+<span><span class="co">#&gt; 3 KS1: 3+ -&gt; KS2: 5-     345      115        460</span></span>
+<span><span class="co">#&gt; 4  KS1: 3+ -&gt; KS2: 4     749      243        992</span></span>
+<span><span class="co">#&gt; 5 KS1: 3+ -&gt; KS2: 3-     196       68        264</span></span>
+<span><span class="co">#&gt; 6  KS1: 2A -&gt; KS2: 6      60       23         83</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; $A_level</span></span>
+<span><span class="co">#&gt;           Transition A_level: No Maths A_level: Maths + Further A_level: Maths</span></span>
+<span><span class="co">#&gt; 1  KS1: 3+ -&gt; KS2: 6                55                        2              1</span></span>
+<span><span class="co">#&gt; 2 KS1: 3+ -&gt; KS2: 5+               285                        9             23</span></span>
+<span><span class="co">#&gt; 3 KS1: 3+ -&gt; KS2: 5-               400                       10             50</span></span>
+<span><span class="co">#&gt; 4  KS1: 3+ -&gt; KS2: 4               891                       20             81</span></span>
+<span><span class="co">#&gt; 5 KS1: 3+ -&gt; KS2: 3-               235                        5             24</span></span>
+<span><span class="co">#&gt; 6  KS1: 2A -&gt; KS2: 6                67                        1             15</span></span>
+<span><span class="co">#&gt;   A_level: Total</span></span>
+<span><span class="co">#&gt; 1             58</span></span>
+<span><span class="co">#&gt; 2            317</span></span>
+<span><span class="co">#&gt; 3            460</span></span>
+<span><span class="co">#&gt; 4            992</span></span>
+<span><span class="co">#&gt; 5            264</span></span>
+<span><span class="co">#&gt; 6             83</span></span></code></pre></div>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/data_frame_to_workbook.html">data_frame_to_workbook</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">transition_demographics</span><span class="op">$</span><span class="va">FSM</span>,</span>
+<span>                            sheet <span class="op">=</span> <span class="st">'FSM'</span>,</span>
+<span>                            title <span class="op">=</span> <span class="st">'Transitions between KS1, KS2 and GCSE split by students FSM status'</span>,</span>
+<span>                            source <span class="op">=</span> <span class="st">'Source: National Pupil Database'</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/data_frame_to_workbook.html">data_frame_to_workbook</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">transition_demographics</span><span class="op">$</span><span class="va">A_level</span>,</span>
+<span>                              sheet <span class="op">=</span> <span class="st">'A-level'</span>,</span>
+<span>                              title <span class="op">=</span> <span class="st">'Transitions between KS1, KS2 and GCSE split by students A-level mathematics choices'</span>,</span>
+<span>                              source <span class="op">=</span> <span class="st">'Source: National Pupil Database'</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu">openxlsx</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/openxlsx/man/saveWorkbook.html" class="external-link">saveWorkbook</a></span><span class="op">(</span>file <span class="op">=</span> <span class="st">'transition_info.xlsx'</span>, overwrite <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+</div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
     </nav></aside>
 </div>
