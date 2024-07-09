@@ -127,11 +127,11 @@ In this section we show how to use functions to alter the visualisation of the s
 p = sankey_filtered(pathways = pathways, flow_columns = c(3:6), filters = c('GCSE: 9', 'GCSE: 8'), union = T)
 
 ## Add header to columns
-p |> add_column_names(column_titles = c('KS1', 'KS2', 'GCSE', 'A Level'),fontSize = 14)
+p |> add_column_names(titles = c('KS1', 'KS2', 'GCSE', 'A Level'),fontSize = 14)
 
 # Update the node names.
 # p |> get_nodes() # Can be run to get the node order in the diagram to change.
-p |> update_node_title(titles = c("Level 3+", "Level 2A", "Level 2B", "Level 2C-",
+p |> update_node_labels(labels = c("Level 3+", "Level 2A", "Level 2B", "Level 2C-",
                        "Level 6", "Level 5+", "Level 5-", "Level 4", "Level 3-",
                        "Grade 8","Grade 9",
                        "Maths + Further", "Maths", "No Maths" ))
