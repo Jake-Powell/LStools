@@ -1,3 +1,18 @@
+#' Remove factors from a data frame.
+#'
+#' @param df  data frame
+#'
+#' @return data frame without factors
+#'
+remove.factors = function(df) {
+  for(varnum in 1:length(df)) {
+    if("factor" %in% class(df[,varnum])) {
+      df[varnum]=as.character(df[,varnum])
+    }
+  }
+  return(df)
+}
+
 #' Write data frame to excel with title and source
 #'
 #' @param data data frame
@@ -5,6 +20,7 @@
 #' @param source source information of the data frame.
 #' @param filepath path to save the excel file.
 #'
+#' @export
 #'
 #' @examples
 #' if(FALSE){
@@ -50,6 +66,7 @@ data_frame_to_xlsx <- function(data,
 #' @param append_to either NULL for a new workbook or a workbook to append the sheet to.
 #'
 #' @return workbook
+#' @export
 data_frame_to_workbook <- function(append_to = NULL,
                                    data = NULL,
                                    sheet = 'Data',

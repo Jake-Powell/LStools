@@ -89,6 +89,46 @@ data_frame_to_workbook(data = composition_by_FSM_KS1_SDC$KS2,
   openxlsx::saveWorkbook(file = 'composition.xlsx', overwrite = TRUE)
 ```
 
+
+`pathway_composition_tables()` can also be used across multiple years of data allowing trends in composition to be explored. For example if our raw data had another column for the year the student was in year 11 (final year of secondary school) 
+
+```{r, echo = T}
+set.seed(33)
+KS1 = sample(c('3+','2A','2B', '2C-'), 10000, replace = T, prob = c(.21,.28,.26,.25))
+KS2 = sample(c('6','5+', '5-','4','3-'), 10000, replace = T, prob = c(0.03, 0.15, 0.22, 0.46, 0.13))
+GCSE = sample(c('9','8', '7', '6-'), 10000, replace = T, prob = c(0.03, 0.07, 0.10, 0.80))
+A_level =  sample(c('Maths + Further',  'Maths', 'No Maths'), 10000, replace = T, prob = c(0.02, 0.09, 0.89))
+FSM = sample(c('Yes', 'No'), 10000, replace = T, prob = c(.238, 1-.238))
+IDACI = sample(c('1st','2nd','3rd', '4th', '5th'), 10000, replace = T)
+Year = sample(c('2022','2023'), 10000, replace = T, prob = c(.45, .55))
+KS1[sample(1:10000,50)] = NA
+raw_years = data.frame(Year = factor(Year),
+                 FSM = factor(FSM),
+                 IDACI = factor(IDACI),
+                 KS1 = factor(KS1, levels = c('3+','2A','2B', '2C-')),
+                 KS2 = factor(KS2, levels = c('6','5+', '5-','4','3-')),
+                 GCSE= factor(GCSE, levels = c('9','8', '7', '6-')),
+                 A_level = factor(A_level, levels = c('Maths + Further',  'Maths', 'No Maths'))
+)
+
+pathways_years = LStools::raw_to_pathway(raw_years)
+
+```
+
+we can use the variable `year_column` to specify the year in `pathway_composition_tables()` resulting in the following composition tables being created (note that this should only be used if the values (grades) remain the same between the years)
+
+```{r, create composition table with years}
+composition_by_FSM_IDACI_2022_23 = pathways_years |> pathway_composition_tables(describers = c('FSM','IDACI'), stages = c('KS2', 'GCSE'),year_column = 'Year')
+composition_by_FSM_IDACI_2022_23$KS2 # Look only at KS2 composition
+```
+
+The table can then be used to look at trends over time of the composition of stages in the pipeline. For example in our fake dataset has the results of FSM students changed at KS2 between 2022 and 2023?
+
+```{r dummy example}
+required_data = composition_by_FSM_IDACI_2022_23$KS2 |> dplyr::filter(describer == 'FSM' & level == 'Yes')
+required_data[,4:8] = (required_data[,4:8] / required_data[,9] *100) |> round(digits = 2)
+required_data
+```
 ***
 
 ### Composition of transitions

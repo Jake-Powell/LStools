@@ -2,7 +2,7 @@
 #'
 #' Creates a markdown report looking at the composition of an individual stage.
 #'
-#' @details  This function creates a markdown report that produces a table of values for the stage (column in the data) of interest. It also can breakdown the composition of the stage by other columns in the data y using `describer_columns` input. Where horizontal bar charts are created showing the number of students within unique groups within the stage and each column given in `describer_columns`.
+#' @details  This function creates a markdown report that produces a table of values for the stage (column in the data) of interest. It also breakdowns the composition of the stage by other columns in the data y using `describer_columns`. Where horizontal bar charts are created showing the number of students within unique groups within the stage and each column given in `describer_columns`, together with the underlying data tables - which can be downloaded.
 #'
 #' Moreover, statistical control can be toggled via the `do_SDC` flag, where the level of statistical disclosure control can be fine tuned using `round_to` and `issue_level`.
 #'
@@ -10,7 +10,7 @@
 #' @param stage_column the column name (or index) within raw that we want to explore.
 #' @param describer_columns column names (or indices) where we explore the relationship with `stage_column`.
 #' @param do_SDC Flag (TRUE/FALSE) for whether statistical control is applied, the level of statistic control can be varied using `round_to` or `issue_level`.
-#' @param round_to numeric, value to round number of students to default is `5`.
+#' @param round_to numeric, value to round number of students to default is `10`.
 #' @param issue_level numeric, and count of students less than `issue_level` will be redacted. This is performed prior to rounding.
 #' @param report_kind What kind of report to produce `interactive` (html document) or `static` (word document).
 #' @param reference_docx p
@@ -25,7 +25,7 @@ create_stage_composition_report <- function(raw,
                                      stage_column,
                                      describer_columns,
                                      do_SDC = FALSE,
-                                     round_to = 5,
+                                     round_to = 10,
                                      issue_level = 5,
                                      report_name = NULL,
                                      report_kind = 'interactive',

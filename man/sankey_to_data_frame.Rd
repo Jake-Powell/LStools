@@ -2,15 +2,18 @@
 % Please edit documentation in R/sankey_helpers.R
 \name{sankey_to_data_frame}
 \alias{sankey_to_data_frame}
-\title{Convert a sankey diagram to a data frame (or list of data frames)}
+\title{Convert a sankey diagram to a data frame}
 \usage{
 sankey_to_data_frame(p, simple = T)
 }
 \arguments{
-\item{p}{sankey diagram}
+\item{p}{sankey diagram object}
 
 \item{simple}{Flag (TRUE/FALSE) for whether you want simplified information (a single data frame with source target and number of students) or original data (two data frames one for links one for nodes)}
 }
 \description{
-Convert a sankey diagram to a data frame (or list of data frames)
+Convert a sankey diagram to a data frame
+}
+\details{
+this function takes a sankey diagram (sankeyNetwork object) and converts the underlying data into a data frame (or list of data frames).
 }

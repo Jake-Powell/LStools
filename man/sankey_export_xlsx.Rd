@@ -2,7 +2,7 @@
 % Please edit documentation in R/sankey_helpers.R
 \name{sankey_export_xlsx}
 \alias{sankey_export_xlsx}
-\title{Write sankey to excel}
+\title{Write sankey to xlsx}
 \usage{
 sankey_export_xlsx(
   p,
@@ -12,14 +12,17 @@ sankey_export_xlsx(
 )
 }
 \arguments{
-\item{p}{sankey diagram}
+\item{p}{sankey diagram object}
 
 \item{title}{title for excel spreadsheet}
 
-\item{source}{sources used for sankey diagram (NPD / HESA, etc)}
+\item{source}{sources used for sankey diagram (e.g. Source: National Pupil Database)}
 
 \item{filepath}{the file path to save the .xlsx file to.}
 }
 \description{
-This function writes the sankey diagram information (flows) to an .xlsx file with title (title) and subtitle (source) ready for SDC checks / outputting.
+Write sankey to xlsx
+}
+\details{
+This function writes the sankey diagram information (flows) to an .xlsx file with title (`title`) and subtitle (`source`) ready for SDC checks / outputting.
 }

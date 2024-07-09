@@ -1,5 +1,5 @@
 ---
-title: "Creating Sankey Diagrams"
+title: "Creating sankey diagrams"
 ---
 
 ```{r, include = FALSE}

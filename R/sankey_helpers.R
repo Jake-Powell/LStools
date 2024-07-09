@@ -1,11 +1,10 @@
-#' Sankey Helper functions
+#' Extract nodes/links from a  Sankey diagram
 #'
-#' Helper functions that may be of use if you want to change the colour/text/hovertext of nodes and links in a sankey diagram.
 #'
 #' - `get_nodes()` returns the ordered named nodes of the Sankey diagram
 #'
 #' - `get_links()`returns the ordered named links of the Sankey diagram.
-#' @param p sankey diagram
+#' @param p sankey diagram object
 #'
 #' @export
 #'
@@ -21,10 +20,12 @@ get_links <- function(p){
 }
 
 
-#' Convert a sankey diagram to a data frame (or list of data frames)
+#' Convert a sankey diagram to a data frame
 #'
+#' @details
+#' this function takes a sankey diagram (sankeyNetwork object) and converts the underlying data into a data frame (or list of data frames).
 #'
-#' @param p sankey diagram
+#' @param p sankey diagram object
 #' @param simple  Flag (TRUE/FALSE) for whether you want simplified information (a single data frame with source target and number of students) or original data (two data frames one for links one for nodes)
 #'
 #' @export
@@ -43,15 +44,16 @@ sankey_to_data_frame <- function(p, simple = T){
 }
 
 
-#' Write sankey to excel
+#' Write sankey to xlsx
 #'
-#' This function writes the sankey diagram information (flows) to an .xlsx file with title (title) and subtitle (source) ready for SDC checks / outputting.
+#'@details
+#' This function writes the sankey diagram information (flows) to an .xlsx file with title (`title`) and subtitle (`source`) ready for SDC checks / outputting.
 #'
 #'
 #'
-#' @param p sankey diagram
+#' @param p sankey diagram object
 #' @param title title for excel spreadsheet
-#' @param source sources used for sankey diagram (NPD / HESA, etc)
+#' @param source sources used for sankey diagram (e.g. Source: National Pupil Database)
 #' @param filepath the file path to save the .xlsx file to.
 #'
 #' @export

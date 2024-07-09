@@ -3,20 +3,18 @@
 \name{get_nodes}
 \alias{get_nodes}
 \alias{get_links}
-\title{Sankey Helper functions}
+\title{Extract nodes/links from a  Sankey diagram}
 \usage{
 get_nodes(p)
 
 get_links(p)
 }
 \arguments{
-\item{p}{sankey diagram}
+\item{p}{sankey diagram object}
 }
 \description{
-Helper functions that may be of use if you want to change the colour/text/hovertext of nodes and links in a sankey diagram.
+- `get_nodes()` returns the ordered named nodes of the Sankey diagram
 }
 \details{
-- `get_nodes()` returns the ordered named nodes of the Sankey diagram
-
 - `get_links()`returns the ordered named links of the Sankey diagram.
 }

@@ -17,27 +17,27 @@ library(LStools)
 
 ```{r, imported parameters}
 #Inputs
-set.seed(33)
-KS1 = sample(c('3+','2A','2B', '2C-'), 10000, replace = T, prob = c(.21,.28,.26,.25))
-KS2 = sample(c('6','5+', '5-','4','3-'), 10000, replace = T, prob = c(0.03, 0.15, 0.22, 0.46, 0.13))
-GCSE = sample(c('9','8', '7', '6-'), 10000, replace = T, prob = c(0.03, 0.07, 0.10, 0.80))
-A_level =  sample(c('Maths + Further',  'Maths', 'No Maths'), 10000, replace = T, prob = c(0.02, 0.09, 0.89))
-FSM = sample(c('Yes', 'No'), 10000, replace = T, prob = c(.238, 1-.238))
-
-raw = data.frame(FSM = factor(FSM),
-                 KS1 = factor(KS1, levels = c('3+','2A','2B', '2C-')),
-                 KS2 = factor(KS2, levels = c('6','5+', '5-','4','3-')),
-                 GCSE= factor(GCSE, levels = c('9','8', '7', '6-')),
-                 A_level = factor(A_level, levels = c('Maths + Further',  'Maths', 'No Maths')))
-
-
-describer_columns = 1:3
-stage_column = 4
-report_name = 'GCSE composition'
-report_kind = 'interactive'
-reference_docx = NULL
-output_dir = getwd()
-do_SDC = TRUE
+# set.seed(33)
+# KS1 = sample(c('3+','2A','2B', '2C-'), 10000, replace = T, prob = c(.21,.28,.26,.25))
+# KS2 = sample(c('6','5+', '5-','4','3-'), 10000, replace = T, prob = c(0.03, 0.15, 0.22, 0.46, 0.13))
+# GCSE = sample(c('9','8', '7', '6-'), 10000, replace = T, prob = c(0.03, 0.07, 0.10, 0.80))
+# A_level =  sample(c('Maths + Further',  'Maths', 'No Maths'), 10000, replace = T, prob = c(0.02, 0.09, 0.89))
+# FSM = sample(c('Yes', 'No'), 10000, replace = T, prob = c(.238, 1-.238))
+# 
+# raw = data.frame(FSM = factor(FSM),
+#                  KS1 = factor(KS1, levels = c('3+','2A','2B', '2C-')),
+#                  KS2 = factor(KS2, levels = c('6','5+', '5-','4','3-')),
+#                  GCSE= factor(GCSE, levels = c('9','8', '7', '6-')),
+#                  A_level = factor(A_level, levels = c('Maths + Further',  'Maths', 'No Maths')))
+# 
+# 
+# describer_columns = 1:3
+# stage_column = 4
+# report_name = 'GCSE composition'
+# report_kind = 'interactive'
+# reference_docx = NULL
+# output_dir = getwd()
+# do_SDC = TRUE
 
 pathways = raw_to_pathway(raw)
 if(is.numeric(stage_column)){
@@ -230,7 +230,7 @@ In the following sections we explore the the interplay between `r stage_column` 
 knit_child_with_params <- function(p) {
   params <- p
   knitr::knit_child(
-    "child.rmd",
+    "stage_composition_by_single_describer.Rmd",
     envir = environment(),
     quiet = TRUE)
 }

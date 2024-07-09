@@ -1,19 +1,3 @@
-
-#' Remove factors from a data frame.
-#'
-#' @param df  data frame
-#'
-#' @return data frame without factors
-#'
-remove.factors = function(df) {
-  for(varnum in 1:length(df)) {
-    if("factor" %in% class(df[,varnum])) {
-      df[varnum]=as.character(df[,varnum])
-    }
-  }
-  return(df)
-}
-
 #' Filter the raw data
 #'
 #' @param data data
@@ -281,6 +265,7 @@ pathway_summary_describers_at_stages <- function(pathways, describers, stages){
 #' @param pathways data frame containing pathways.
 #' @param describers A character vector of column names in pathways which we want to describe the stages (such as FSM, Sex, IDACI, etc)
 #' @param stages A character vector of column names in pathways we split by the columns given in describers. (columns such as KS1, KS2, etc)
+#' @param year_column The column name referring to the reference year of the record (such as age that students took their GCSEs). Default is `NULL` which implies all records come from the same year.
 #' @param do_SDC Flag (TRUE/FALSE) for whether statistical disclosure is performed.
 #' @param round_to number to round to
 #' @param issue_level number, where values with fewer students have their value omitted (set to "-").
@@ -290,22 +275,35 @@ pathway_summary_describers_at_stages <- function(pathways, describers, stages){
 pathway_composition_tables <- function(pathways,
                                        describers,
                                        stages,
+                                       year_column = NULL,
                                        do_SDC = FALSE,
                                        round_to = 10,
                                        issue_level = 5){
 
+  # A) Get the index of the year column or create a year column if year_column = NULL.
+  if(is.null(year_column)){
+    pathways = data.frame(Year_use = rep(0, nrow(pathways)), pathways)
+    year_column = 'Year_use'
+  }
+  years = pathways[[year_column]] |> unique()
+
   # 1) check the describers and stages correspond to columns of pathways.
   describer_indices = match(describers, names(pathways))
   stage_indices = match(stages, names(pathways))
-  if(any(is.na(describer_indices)) || any(is.na(stage_indices))){
-    issue_columns = c(describers[which(is.na(describer_indices))], stages[which(is.na(stage_indices))])
+  year_index = match(year_column, names(pathways))
+
+
+  if(any(is.na(describer_indices)) || any(is.na(stage_indices)) || any(is.na(year_index))){
+    issue_columns = c(describers[which(is.na(describer_indices))],
+                      stages[which(is.na(stage_indices))],
+                      year_column[which(is.na(year_index))])
     mes = paste0('Error! The following describers/stages are not names of columns in pathways: ', paste0(issue_columns,collapse = ', '), '.', collapse='')
     stop(mes)
   }
 
   # 2) strip pathways to only the columns of interest.
   all_columns = names(pathways)[-length(names(pathways))]
-  wanted = c(describers, stages)
+  wanted = c(describers, stages, year_column)
   not_needed = all_columns[!all_columns %in% wanted]
   if(length(not_needed) > 0){
     pathways_stripped = pathway_remove_columns(pathways,not_needed)
@@ -313,51 +311,78 @@ pathway_composition_tables <- function(pathways,
   stripped_names = names(pathways_stripped)[-length(names(pathways_stripped))]
 
   # 3) Create the output.
-  output = list()
-  # Loop over stages
-  for(i in 1:length(stages)){
-    stage_cur = stages[i]
-    stage_cur
+  super_output = list()
+  # Loop over years
+  for(k in 1:length(years)){
+    pathways_to_use = pathways_stripped[pathways_stripped$Year == years[k],]
+    output = list()
+    # Loop over stages
+    for(i in 1:length(stages)){
+      stage_cur = stages[i]
+      stage_cur
 
-    stage_table = NULL
-    #Loop over describers
-    for(j in 1:length(describers)){
-      describer_cur = describers[j]
-      describer_cur
-      path_cur = pathway_remove_columns(pathways_stripped,stripped_names[!stripped_names %in% c(describer_cur, stage_cur)])
-      path_cur = path_cur[c(describer_cur, stage_cur, 'No_students')]
-      #Convert path_cur to a table of rows describer_cur, columns stage_cur
-      tab = matrix(NA, nrow = length(unique(path_cur[,1])), ncol = length(unique(path_cur[,2])))
-      rownames(tab) = unique(path_cur[,1]) ; colnames(tab) = unique(path_cur[,2])
-      path_cur[,1] = factor(path_cur[,1]) ; path_cur[,2] = factor(path_cur[,2])
-      indices = cbind(as.numeric(path_cur[,1]), as.numeric(path_cur[,2]))
-      for(kk in 1:nrow(path_cur)){
-        tab[indices[kk,1],indices[kk,2]] = path_cur[kk,3]
-      }
-      # Add total crow/olumns?
-      tab = rbind(tab, colSums(tab)) ; tab = cbind(tab, rowSums(tab))
+      stage_table = NULL
+      #Loop over describers
+      for(j in 1:length(describers)){
+        describer_cur = describers[j]
+        describer_cur
+        path_cur = pathway_remove_columns(pathways_to_use,stripped_names[!stripped_names %in% c(describer_cur, stage_cur)])
+        path_cur = path_cur[c(describer_cur, stage_cur, 'No_students')]
+        #Convert path_cur to a table of rows describer_cur, columns stage_cur
+        tab = matrix(NA, nrow = length(unique(path_cur[,1])), ncol = length(unique(path_cur[,2])))
+        rownames(tab) = unique(path_cur[,1]) ; colnames(tab) = unique(path_cur[,2])
+        path_cur[,1] = factor(path_cur[,1]) ; path_cur[,2] = factor(path_cur[,2])
+        indices = cbind(as.numeric(path_cur[,1]), as.numeric(path_cur[,2]))
+        for(kk in 1:nrow(path_cur)){
+          tab[indices[kk,1],indices[kk,2]] = path_cur[kk,3]
+        }
+        # Add total row/columns?
+        tab = rbind(tab, colSums(tab)) ; tab = cbind(tab, rowSums(tab))
 
-      #Save to list
-      name_for_tab = colnames(tab) ; name_for_tab[length(name_for_tab)] = 'Total'
-      tab_new = tab[-nrow(tab),] |> data.frame()
-      tab_new = data.frame(describer = describer_cur, level = rownames(tab_new), tab_new)
-      names(tab_new) = c('describer', 'level', name_for_tab)
-      rownames(tab_new) = NULL
-      stage_table = rbind(stage_table, tab_new)
+        #Save to list
+        name_for_tab = colnames(tab) ; name_for_tab[length(name_for_tab)] = 'Total'
+        tab_new = tab[-nrow(tab),] |> data.frame()
+        tab_new = data.frame(describer = describer_cur, level = rownames(tab_new), tab_new)
+        names(tab_new) = c('describer', 'level', name_for_tab)
+        rownames(tab_new) = NULL
+        stage_table = rbind(stage_table, tab_new)
 
-    }
-
-    # Apply SDC
-    if(do_SDC){
-      for(ii in 3:ncol(stage_table)){
-        stage_table[,ii] = stage_table[,ii] |>  apply_SDC(round_to = round_to, issue_level = issue_level)
       }
 
+      # Apply SDC
+      if(do_SDC){
+        for(ii in 3:ncol(stage_table)){
+          stage_table[,ii] = stage_table[,ii] |>  apply_SDC(round_to = round_to, issue_level = issue_level)
+        }
+
+      }
+      output[[i]] = stage_table
     }
-    output[[i]] = stage_table
+    names(output) = stages
+    super_output[[k]] = output
+
   }
-  names(output) = stages
-  return(output)
+  names(super_output) = years
+
+
+  # 4) Re-format the output is we have multiple years.
+  if(length(years) == 1){ #only single year no need to re-format.
+    return(super_output[[1]])
+  }
+  # Now in the case of having multiple years, convert to long format for year stage.
+  out_new = list()
+  for(i in 1:length(stages)){
+    stage_values = NULL
+    for(j in 1:length(years)){
+      cur = super_output[[j]][[i]]
+      cur = data.frame(Year = years[j], cur)
+      stage_values = rbind(stage_values, cur)
+    }
+    names(stage_values) = c('Year', names(super_output[[j]][[i]]))
+    out_new[[i]] = stage_values
+  }
+  names(out_new) = stages
+  return(out_new)
 }
 
 

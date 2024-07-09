@@ -1,5 +1,6 @@
 #' Functions to customise the styling of the sankey diagrams
 #'
+#' @details
 #'  - `add_column_names()` this function can be used to add names above stages (columns) in the the sankey diagram.
 #'
 #' - `add_node_hover_text()` this can be used to change the hover information over nodes.
@@ -13,7 +14,6 @@
 #'
 #'
 #' @param p html widget of a sankey diagram
-#' @param column_titles column_titles
 #' @param fontSize numeric font size in pixels for the node text labels.
 #' @param fontFamily font family for the node text labels.
 #' @param colors_node a character vector of length the number of nodes in the sankey (`p |> get_nodes() |> length()`) specifying the desired colour for the nodes.
@@ -22,11 +22,12 @@
 #' @param link_alpha numeric between 0 and 1 specifying the transparency to apply to link colours (closer to zero the larger the transparency)
 #' @param hovertext a character vector of either the same length as nodes or links (depending on the function) to overwrite the hover information in the sankey diagram.
 #' @param titles a character vector of the same length as the number of stages in the sankey diagram specifying the title to but above each stage.
+#' @param labels a character vector of the same length as the number of nodes in the sankey diagram specifying the new label for each node.
 #'
 #' @export
 #'
-add_column_names <- function(p, column_titles, fontSize = p$x$options$fontSize, fontFamily = p$x$options$fontFamily){
-  labels = column_titles
+add_column_names <- function(p, titles, fontSize = p$x$options$fontSize, fontFamily = p$x$options$fontFamily){
+  labels = titles
   p =htmlwidgets::onRender(p, paste0('
   function(el) {
     var cols_x = this.sankey.nodes().map(d => d.x).filter((v, i, a) => a.indexOf(v) === i).sort(function(a, b){return a - b});
@@ -81,9 +82,9 @@ add_link_hover_text <- function(p, hovertext){
 
 #' @rdname add_column_names
 #' @export
-update_node_title <- function(p, titles = NULL){
-  if( length(titles) == length(p$x$nodes$name)){
-    p$x$nodes$name = titles
+update_node_labels <- function(p, labels = NULL){
+  if( length(labels) == length(p$x$nodes$name)){
+    p$x$nodes$name = labels
   }
   htmlwidgets::onRender(p,'')
 }

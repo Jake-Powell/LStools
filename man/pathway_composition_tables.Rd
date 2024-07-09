@@ -8,6 +8,7 @@ pathway_composition_tables(
   pathways,
   describers,
   stages,
+  year_column = NULL,
   do_SDC = FALSE,
   round_to = 10,
   issue_level = 5
@@ -19,6 +20,8 @@ pathway_composition_tables(
 \item{describers}{A character vector of column names in pathways which we want to describe the stages (such as FSM, Sex, IDACI, etc)}
 
 \item{stages}{A character vector of column names in pathways we split by the columns given in describers. (columns such as KS1, KS2, etc)}
+
+\item{year_column}{The column name referring to the reference year of the record (such as age that students took their GCSEs). Default is `NULL` which implies all records come from the same year.}
 
 \item{do_SDC}{Flag (TRUE/FALSE) for whether statistical disclosure is performed.}
 

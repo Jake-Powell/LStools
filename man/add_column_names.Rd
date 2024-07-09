@@ -4,13 +4,13 @@
 \alias{add_column_names}
 \alias{add_node_hover_text}
 \alias{add_link_hover_text}
-\alias{update_node_title}
+\alias{update_node_labels}
 \alias{update_sankey_colour}
 \title{Functions to customise the styling of the sankey diagrams}
 \usage{
 add_column_names(
   p,
-  column_titles,
+  titles,
   fontSize = p$x$options$fontSize,
   fontFamily = p$x$options$fontFamily
 )
@@ -19,7 +19,7 @@ add_node_hover_text(p, hovertext)
 
 add_link_hover_text(p, hovertext)
 
-update_node_title(p, titles = NULL)
+update_node_labels(p, labels = NULL)
 
 update_sankey_colour(
   p,
@@ -32,7 +32,7 @@ update_sankey_colour(
 \arguments{
 \item{p}{html widget of a sankey diagram}
 
-\item{column_titles}{column_titles}
+\item{titles}{a character vector of the same length as the number of stages in the sankey diagram specifying the title to but above each stage.}
 
 \item{fontSize}{numeric font size in pixels for the node text labels.}
 
@@ -40,7 +40,7 @@ update_sankey_colour(
 
 \item{hovertext}{a character vector of either the same length as nodes or links (depending on the function) to overwrite the hover information in the sankey diagram.}
 
-\item{titles}{a character vector of the same length as the number of stages in the sankey diagram specifying the title to but above each stage.}
+\item{labels}{a character vector of the same length as the number of nodes in the sankey diagram specifying the new label for each node.}
 
 \item{colors_node}{a character vector of length the number of nodes in the sankey (`p |> get_nodes() |> length()`) specifying the desired colour for the nodes.}
 
@@ -51,9 +51,11 @@ update_sankey_colour(
 \item{link_alpha}{numeric between 0 and 1 specifying the transparency to apply to link colours (closer to zero the larger the transparency)}
 }
 \description{
-- `add_column_names()` this function can be used to add names above stages (columns) in the the sankey diagram.
+Functions to customise the styling of the sankey diagrams
 }
 \details{
+- `add_column_names()` this function can be used to add names above stages (columns) in the the sankey diagram.
+
 - `add_node_hover_text()` this can be used to change the hover information over nodes.
 
 - `add_link_hover_text()` this can be used to changed the hover information of links.

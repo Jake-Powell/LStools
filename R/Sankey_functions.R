@@ -1,17 +1,20 @@
-#' A function that converts pathways to sankey diagram information.
+#' converts pathways to links
+#'
+#' @details
+#' This function takes a data frame of pathways and converts them to links for a sankey diagram.
 #'
 #' Note that you need to remove "describer" columns prior to using this function. In other words each column in pathways is viewed as a stage (KS1, KS2, etc) in the sankey diagram. Hence the order of columns is also important.
 #'
 #' @param pathways pathways
-#' @param links_as_pos links_as_pos
-#' @param remove_na remove_na Flag (TRUE/FALSE) for whether NA values are removed.
+#' @param links_as_pos Flag (TRUE/FALSE) for whether the links (source/target) are expressed as node names (e.g. KS1:3) or node indices (0,1,2, etc) used in the creation of sankey diagrams.
+#' @param remove_na Flag (TRUE/FALSE) for whether NA values are removed. For example any pathways which has any stage = NA is removed such that flow into a node always matched flow out of a node.
 #' @param ... arguments to `SDC_to_links()`.
 #' @return links
 #' @export
 #'
 pathway_to_links <- function(pathways,
                              links_as_pos = TRUE,
-                             remove_na=T,
+                             remove_na=TRUE,
                              ...){
   if(remove_na==F){
     #Join colname to pathways elements to make sure there's no repeated values across columns. For example an A at GCSE and an A at a level.
@@ -150,6 +153,9 @@ pathway_to_links <- function(pathways,
     all_links[,1] = as.numeric(all_links[,1])
     all_links[,2] = as.numeric(all_links[,2])
   }
+
+  sankey = list(nodes = nodes, links = all_links)
+  return(sankey)
 
   ### Apply SDC ----
   # all_links$SDC <- all_links |> SDC_to_links(...)

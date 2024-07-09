@@ -2,16 +2,16 @@
 % Please edit documentation in R/Sankey_functions.R
 \name{pathway_to_links}
 \alias{pathway_to_links}
-\title{A function that converts pathways to sankey diagram information.}
+\title{converts pathways to links}
 \usage{
-pathway_to_links(pathways, links_as_pos = TRUE, remove_na = T, ...)
+pathway_to_links(pathways, links_as_pos = TRUE, remove_na = TRUE, ...)
 }
 \arguments{
 \item{pathways}{pathways}
 
-\item{links_as_pos}{links_as_pos}
+\item{links_as_pos}{Flag (TRUE/FALSE) for whether the links (source/target) are expressed as node names (e.g. KS1:3) or node indices (0,1,2, etc) used in the creation of sankey diagrams.}
 
-\item{remove_na}{remove_na Flag (TRUE/FALSE) for whether NA values are removed.}
+\item{remove_na}{Flag (TRUE/FALSE) for whether NA values are removed. For example any pathways which has any stage = NA is removed such that flow into a node always matched flow out of a node.}
 
 \item{...}{arguments to `SDC_to_links()`.}
 }
@@ -19,5 +19,10 @@ pathway_to_links(pathways, links_as_pos = TRUE, remove_na = T, ...)
 links
 }
 \description{
+converts pathways to links
+}
+\details{
+This function takes a data frame of pathways and converts them to links for a sankey diagram.
+
 Note that you need to remove "describer" columns prior to using this function. In other words each column in pathways is viewed as a stage (KS1, KS2, etc) in the sankey diagram. Hence the order of columns is also important.
 }
