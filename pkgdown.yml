@@ -1,12 +1,11 @@
 pandoc: 3.1.11
-pkgdown: 2.0.9
+pkgdown: 2.1.0
 pkgdown_sha: ~
 articles:
-  Creating_simple_reports: Creating_simple_reports.html
-  creating_simple_tables: creating_simple_tables.html
-  Creating-Sankey-Diagrams: Creating-Sankey-Diagrams.html
-last_built: 2024-07-02T12:58Z
+  articles/Creating_simple_reports: Creating_simple_reports.html
+  articles/creating_simple_tables: creating_simple_tables.html
+  articles/Creating-Sankey-Diagrams: Creating-Sankey-Diagrams.html
+last_built: 2024-07-09T13:04Z
 urls:
   reference: https://jakepowellcubg.github.io/LStools/reference
   article: https://jakepowellcubg.github.io/LStools/articles
-
