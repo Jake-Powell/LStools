@@ -25,5 +25,6 @@ Suggests:
     knitr,
     rmarkdown,
     viridis
-URL: https://jakepowellcubg.github.io/LStools/
+URL: https://jakepowellcubg.github.io/LStools/,
+    https://jake-powell.github.io/LStools/
 VignetteBuilder: knitr
