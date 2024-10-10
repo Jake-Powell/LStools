@@ -15,6 +15,9 @@ library(LStools)
 
 *In this vignette we show how to use the LStools package to create simple reports from raw student data*.
 
+
+gjklsvkf; 
+
 ### Composition of a stage 
 
 The function `create_stage_composition_report()` can be used to simply create a report given some cleaned student information. Where the report concentrates on a single stage (KS1 maths, GCSE maths, etc) and looks at the composition of the students at that stage relative to other quantities (demographics, grades at other stages). 
