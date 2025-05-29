@@ -19,27 +19,13 @@ library(LStools)
 
 *In this vignette we show how to use the LStools package to create sankey diagrams of the educational pipeline*
 
-Firstly we need to create some data. 
+Firstly we need to load some data. 
 
 ```{r, echo = T}
-set.seed(33)
-KS1 = sample(c('3+','2A','2B', '2C-'), 10000, replace = T, prob = c(.21,.28,.26,.25))
-KS2 = sample(c('6','5+', '5-','4','3-'), 10000, replace = T, prob = c(0.03, 0.15, 0.22, 0.46, 0.13))
-GCSE = sample(c('9','8', '7', '6-'), 10000, replace = T, prob = c(0.03, 0.07, 0.10, 0.80))
-A_level =  sample(c('Maths + Further',  'Maths', 'No Maths'), 10000, replace = T, prob = c(0.02, 0.09, 0.89))
-FSM = sample(c('Yes', 'No'), 10000, replace = T, prob = c(.238, 1-.238))
-IDACI = sample(c('1st','2nd','3rd', '4th', '5th'), 10000, replace = T)
-
-raw = data.frame(FSM = factor(FSM),
-                 IDACI = factor(IDACI),
-                 KS1 = factor(KS1, levels = c('3+','2A','2B', '2C-')),
-                 KS2 = factor(KS2, levels = c('6','5+', '5-','4','3-')),
-                 GCSE= factor(GCSE, levels = c('9','8', '7', '6-')), 
-                 A_level = factor(A_level, levels = c('Maths + Further',  'Maths', 'No Maths'))
-                 )
+raw = LStools::fake_data
 ```
 
-Within the data each row contains information about an individual student, in our case whether they are classed as receiving free school meals (FSM) or their IDACI quintile. Together with their maths grades at KS1 (5 years old), KS2 (11 years old), GCSE (16 years old) and whether they do maths at A-levels (18 years old). The students grades are grouped at the various levels mirroring the proportion of students taken from the maths pipeline report (figure XX). Note that the columns must be cast by factor with the order in which you want the 'nodes' to appear (i.e in our case highest level to lowest level).
+Within the data each row contains information about an individual student, in our case whether they are classed as receiving free school meals (FSM) or their IDACI quintile. Together with their maths grades at KS1 (5 years old), KS2 (11 years old), GCSE (16 years old) and whether they do maths at A-levels (18 years old). The students grades are grouped at the various levels mirroring the proportion of students taken from the maths pipeline report (figure XX). Note that the columns must be cast to factor with the order in which you want the 'nodes' to appear (i.e in our case highest level to lowest level).
 
 We show the first 10 rows of the data below
 

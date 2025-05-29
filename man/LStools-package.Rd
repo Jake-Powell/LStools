@@ -12,6 +12,7 @@ functions for creating sankey diagrams (build upon networkD3 package) for longit
 Useful links:
 \itemize{
   \item \url{https://jakepowellcubg.github.io/LStools/}
+  \item \url{https://jake-powell.github.io/LStools/}
 }
 
 }

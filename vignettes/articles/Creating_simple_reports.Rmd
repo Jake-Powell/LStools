@@ -23,18 +23,7 @@ The function `create_stage_composition_report()` can be used to simply create a 
 To use the function we require some raw data, where each row corresponds to a unique student. We generate some data below where we have columns for Free school meal (FSM) status, maths grades at KS1, KS2 and GCSE and whether the student does a-level maths (or further maths).
 
 ```{r, echo = T}
-set.seed(33)
-KS1 = sample(c('3+','2A','2B', '2C-'), 10000, replace = T, prob = c(.21,.28,.26,.25))
-KS2 = sample(c('6','5+', '5-','4','3-'), 10000, replace = T, prob = c(0.03, 0.15, 0.22, 0.46, 0.13))
-GCSE = sample(c('9','8', '7', '6-'), 10000, replace = T, prob = c(0.03, 0.07, 0.10, 0.80))
-A_level =  sample(c('Maths + Further',  'Maths', 'No Maths'), 10000, replace = T, prob = c(0.02, 0.09, 0.89))
-FSM = sample(c('Yes', 'No'), 10000, replace = T, prob = c(.238, 1-.238))
-
-raw = data.frame(FSM = factor(FSM),
-                 KS1 = factor(KS1, levels = c('3+','2A','2B', '2C-')),
-                 KS2 = factor(KS2, levels = c('6','5+', '5-','4','3-')),
-                 GCSE= factor(GCSE, levels = c('9','8', '7', '6-')), 
-                 A_level = factor(A_level, levels = c('Maths + Further',  'Maths', 'No Maths')))
+raw = LStools::fake_data
 ```
 
 `r DT::datatable(raw[1:10,], , rownames = FALSE, options = list(scrollX = TRUE,pageLength = nrow(10), dom = 'tp', paging=FALSE))`

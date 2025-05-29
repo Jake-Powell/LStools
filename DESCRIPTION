@@ -19,7 +19,7 @@ Imports:
     stats,
     stringr,
     tibble
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.2
 Suggests: 
     DT,
     knitr,
@@ -28,3 +28,5 @@ Suggests:
 URL: https://jakepowellcubg.github.io/LStools/,
     https://jake-powell.github.io/LStools/
 VignetteBuilder: knitr
+Depends: 
+    R (>= 2.10)
