@@ -159,25 +159,48 @@ update_sankey_colour <- function(p ,colors_node = NULL, colors_link = NULL, type
 #'
 #' @param p          A networkD3 htmlwidget (e.g., from sankeyNetwork()).
 #' @param fontFamily A CSS font-family string, e.g. "Arial" or "Arial, sans-serif".
+#' @param wait_ms    Extra delay before reapplying (handles async rendering).
 #' @return           The same widget with an extra render hook appended.
 #' @export
-set_font_family <- function(p, fontFamily = "Arial") {
-  # Store the choice on the widget so other helpers (or JS) can reuse it
-  # (networkD3 doesn't define this; we add it)
+set_font_family <- function(
+    p,
+    fontFamily = "Arial, Helvetica, sans-serif",
+    wait_ms = 100
+) {
+  # Stash for reuse by other hooks
   p$x$options$fontFamily <- fontFamily
 
-  # Build a small JS render hook that uses x.options.fontFamily if present
-  js <- paste0(
-    'function(el, x) {',
-    '  var ff = (x && x.options && x.options.fontFamily) ? x.options.fontFamily : "', fontFamily, '";',
-    '  var svg = d3.select(el).select("svg");',
-    '  // Node labels and (if present) link labels',
-    '  svg.selectAll(".node text, .link text").style("font-family", ff);',
-    '  // Any column headers or extra <text> you appended',
-    '  svg.selectAll("text").filter(function(){ return true; }).style("font-family", ff);',
-    '}'
+  # Safer JS string literal via JSON encoding
+  ff_json <- jsonlite::toJSON(fontFamily, auto_unbox = TRUE)
+
+  js <- sprintf(
+    'function(el, x) {
+       var ff = (x && x.options && x.options.fontFamily) ? x.options.fontFamily : %s;
+
+       function apply() {
+         var svg = d3.select(el).select("svg");
+         if (svg.empty()) return;
+
+         // Apply to node labels, link labels (if present), and any extra <text> you add.
+         svg.selectAll(".node text, .link text, text")
+            .style("font-family", ff, "important");
+       }
+
+       // Apply immediately and then again after short delays
+       apply();
+       setTimeout(apply, 0);
+       setTimeout(apply, %d);
+
+       // Re-apply if the widget mutates (e.g., redraws labels)
+       if (window.MutationObserver) {
+         var mo = new MutationObserver(function() { apply(); });
+         mo.observe(el, { childList: true, subtree: true });
+       }
+     }',
+    ff_json, as.integer(wait_ms)
   )
 
   htmlwidgets::onRender(p, js)
 }
+
 

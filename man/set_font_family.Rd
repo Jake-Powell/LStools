@@ -4,12 +4,14 @@
 \alias{set_font_family}
 \title{Set font family for networkD3 Sankey and preserve other onRender hooks}
 \usage{
-set_font_family(p, fontFamily = "Arial")
+set_font_family(p, fontFamily = "Arial, Helvetica, sans-serif", wait_ms = 100)
 }
 \arguments{
 \item{p}{A networkD3 htmlwidget (e.g., from sankeyNetwork()).}
 
 \item{fontFamily}{A CSS font-family string, e.g. "Arial" or "Arial, sans-serif".}
+
+\item{wait_ms}{Extra delay before reapplying (handles async rendering).}
 }
 \value{
 The same widget with an extra render hook appended.

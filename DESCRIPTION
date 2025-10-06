@@ -12,6 +12,7 @@ Imports:
     colorspace,
     dplyr,
     htmlwidgets,
+    jsonlite,
     networkD3,
     openxlsx,
     plyr,
