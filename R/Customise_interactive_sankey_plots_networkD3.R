@@ -160,6 +160,7 @@ update_sankey_colour <- function(p ,colors_node = NULL, colors_link = NULL, type
 #' @param p          A networkD3 htmlwidget (e.g., from sankeyNetwork()).
 #' @param fontFamily A CSS font-family string, e.g. "Arial" or "Arial, sans-serif".
 #' @return           The same widget with an extra render hook appended.
+#' @export
 set_font_family <- function(p, fontFamily = "Arial") {
   # Store the choice on the widget so other helpers (or JS) can reuse it
   # (networkD3 doesn't define this; we add it)
