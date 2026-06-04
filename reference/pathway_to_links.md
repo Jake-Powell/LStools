@@ -1,0 +1,45 @@
+# converts pathways to links
+
+converts pathways to links
+
+## Usage
+
+``` r
+pathway_to_links(pathways, links_as_pos = TRUE, remove_na = TRUE, ...)
+```
+
+## Arguments
+
+- pathways:
+
+  pathways
+
+- links_as_pos:
+
+  Flag (TRUE/FALSE) for whether the links (source/target) are expressed
+  as node names (e.g. KS1:3) or node indices (0,1,2, etc) used in the
+  creation of sankey diagrams.
+
+- remove_na:
+
+  Flag (TRUE/FALSE) for whether NA values are removed. For example any
+  pathways which has any stage = NA is removed such that flow into a
+  node always matched flow out of a node.
+
+- ...:
+
+  arguments to \`SDC_to_links()\`.
+
+## Value
+
+links
+
+## Details
+
+This function takes a data frame of pathways and converts them to links
+for a sankey diagram.
+
+Note that you need to remove "describer" columns prior to using this
+function. In other words each column in pathways is viewed as a stage
+(KS1, KS2, etc) in the sankey diagram. Hence the order of columns is
+also important.

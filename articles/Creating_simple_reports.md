@@ -1,0 +1,67 @@
+# Creating simple reports
+
+``` r
+
+library(LStools)
+```
+
+*In this vignette we show how to use the LStools package to create
+simple reports from raw student data*.
+
+### Composition of a stage
+
+The function
+[`create_stage_composition_report()`](https://jake-powell.github.io/LStools/reference/create_stage_composition_report.md)
+can be used to simply create a report given some cleaned student
+information. Where the report concentrates on a single stage (KS1 maths,
+GCSE maths, etc) and looks at the composition of the students at that
+stage relative to other quantities (demographics, grades at other
+stages).
+
+To use the function we require some raw data, where each row corresponds
+to a unique student. We generate some data below where we have columns
+for Free school meal (FSM) status, maths grades at KS1, KS2 and GCSE and
+whether the student does a-level maths (or further maths).
+
+``` r
+
+raw = LStools::fake_data
+```
+
+Note that I have factored the data in such a way that the grades are
+ordered from highest to lowest for each column (where applicable), this
+is such that in the report the grades are shown in that order rather
+than alphabetical (Also useful for sankey diagrams, see vignette
+*Creating Sankey Diagrams*).
+
+Suppose we want to look at the composition of GCSE maths grades relative
+to students achievement in mathematcs in KS1 and KS2, in addition to FSM
+status.
+
+We can create a report exploring this by running
+
+``` r
+
+create_stage_composition_report(raw = raw,
+                         stage_column = 'GCSE',
+                         describer_columns = c('KS1', 'KS2','FSM'),
+                         output_dir = getwd(),
+                         output_file = 'Composition_of_GCSE_by_KS1_KS2_FSM.html')
+```
+
+[`create_stage_composition_report()`](https://jake-powell.github.io/LStools/reference/create_stage_composition_report.md)
+also allows for statistical disclosure control via the input `do_SDC`
+which can be fine tuned using the parameters `round_to` and
+`issue_level` to control the level of rounding and student counts to
+supress.
+
+``` r
+create_stage_composition_report(raw = raw,
+                         stage_column = 'GCSE',
+                         describer_columns = c('KS1', 'KS2','FSM'),
+                         do_SDC = TRUE,
+                         round_to = 5,
+                         issue_level = 5,
+                         output_dir = getwd() 
+                         output_file = 'Composition_of_GCSE_by_KS1_KS2_FSM_with_SDC.html')
+```

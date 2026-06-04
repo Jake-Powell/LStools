@@ -1,0 +1,242 @@
+# Creating sankey diagrams
+
+``` r
+
+library(LStools)
+```
+
+*In this vignette we show how to use the LStools package to create
+sankey diagrams of the educational pipeline*
+
+Firstly we need to load some data.
+
+``` r
+
+raw = LStools::fake_data
+```
+
+Within the data each row contains information about an individual
+student, in our case whether they are classed as receiving free school
+meals (FSM) or their IDACI quintile. Together with their maths grades at
+KS1 (5 years old), KS2 (11 years old), GCSE (16 years old) and whether
+they do maths at A-levels (18 years old). The students grades are
+grouped at the various levels mirroring the proportion of students taken
+from the maths pipeline report (figure XX). Note that the columns must
+be cast to factor with the order in which you want the ‘nodes’ to appear
+(i.e in our case highest level to lowest level).
+
+We show the first 10 rows of the data below
+
+We want to be able to visualise the data via a sankey diagram from KS1
+to A-levels. The first step is to convert the individual student data
+(contained in `raw`) to ‘pathways’, using the function
+[`raw_to_pathway()`](https://jake-powell.github.io/LStools/reference/raw_to_pathway.md)
+which details the number of students who have unique demographics and
+paths through the pipeline.
+
+``` r
+
+pathways = LStools::raw_to_pathway(raw)
+```
+
+The first 10 rows of pathways are shown below
+
+### Creating sankey diagrams directly using pathways
+
+We can then use
+[`sankey_filtered()`](https://jake-powell.github.io/LStools/reference/sankey_filtered.md)
+to convert the pathways data frame into a sankey diagram.
+
+``` r
+
+p = sankey_filtered(pathways = pathways, flow_columns = c(3:6), filters = '')
+
+p
+```
+
+Where the `flow_columns` specifies the columns used in pathways for the
+sankey diagram in order. This can be specified either with the column
+numbers (2 = KS1, 3 = KS2, etc) or via the columns names
+`flow_columns = c('KS1', 'KS2', 'GCSE', 'A_level')`.
+
+We can use the same function to explore subsections of the pipeline by
+using the `filters` input.
+
+``` r
+
+# Only those that have GCSE grade 9.
+p = sankey_filtered(pathways = pathways, flow_columns = c(3:6), filters = 'GCSE: 9')
+p
+```
+
+``` r
+
+
+# Only those that have GCSE grade 9 and KS2 level 5+.
+p = sankey_filtered(pathways = pathways, flow_columns = c(3:6), filters = c('GCSE: 9', 'KS2: 5+'))
+p
+```
+
+``` r
+
+
+# Only those that have GCSE grade 9 or grade 8.
+p = sankey_filtered(pathways = pathways, flow_columns = c(3:6), filters = c('GCSE: 9', 'GCSE: 8'), union = T)
+p
+```
+
+Note that the `union` input only allows for looking at flows through
+multiple nodes at a particular stage. I.e if you set `union = T` in the
+example with KS2 level 5+ and GCSE grade 9 the output would be the same
+sankey diagram (rather than any student who got KS2 level 5+ or GCSE
+grade 9).
+
+As well as zooming into particular parts of the pipeline the filter can
+also be used in relation to demographics as well.
+
+``` r
+
+# Only those that have FSM status.
+p = sankey_filtered(pathways = pathways, flow_columns = c(3:6), filters = 'FSM: Yes')
+p
+```
+
+``` r
+
+
+# Only those that are FSM and got a grade 9 at GCSE.
+p = sankey_filtered(pathways = pathways, flow_columns = c(3:6), filters = c('GCSE: 9', 'FSM: Yes'))
+p
+```
+
+If we instead want to ‘trace’ the students of interest within the whole
+system we can use the
+[`sankey_trace()`](https://jake-powell.github.io/LStools/reference/sankey_trace.md)
+function, where instead of ‘filters’ we enter the students we want to
+trace by the `split_by` input.
+
+``` r
+
+# Only those that have FSM status.
+p = sankey_trace(pathways = pathways, flow_columns = c(3:6), split_by = 'FSM: Yes')
+p
+```
+
+``` r
+
+
+# Only those that got a grade 9 at GCSE.
+p = sankey_trace(pathways = pathways, flow_columns = c(3:6), split_by = c('GCSE: 9' ))
+p
+```
+
+Finally we can also split the sankey flows by a particular demographic
+or characteristic, to do this we can use
+[`sankey_trace_groups()`](https://jake-powell.github.io/LStools/reference/sankey_trace_groups.md)
+where we specify a column that we want to split the flows by.
+
+``` r
+
+# Only those that have FSM status.
+p_grouped =  sankey_trace_groups(pathways = pathways, flow_columns = c(3:6), group_column = 'IDACI',colors = viridis::viridis(5))
+p_grouped
+```
+
+### Customisation visualisation options
+
+In this section we show how to use functions to alter the visualisation
+of the sankey diagrams.
+
+``` r
+
+p = sankey_filtered(pathways = pathways, flow_columns = c(3:6), filters = c('GCSE: 9', 'GCSE: 8'), union = T)
+
+## Add header to columns
+p |> add_column_names(titles = c('KS1', 'KS2', 'GCSE', 'A Level'),fontSize = 14)
+```
+
+``` r
+
+
+# Update the node names.
+# p |> get_nodes() # Can be run to get the node order in the diagram to change.
+p |> update_node_labels(labels = c("Level 3+", "Level 2A", "Level 2B", "Level 2C-",
+                       "Level 6", "Level 5+", "Level 5-", "Level 4", "Level 3-",
+                       "Grade 8","Grade 9",
+                       "Maths + Further", "Maths", "No Maths" ))
+```
+
+``` r
+
+# Change the colour scheme where the links correspond to the node values (doesn't show in Rmarkdown)
+p |> update_sankey_colour(colors_node =  viridis::magma(length(p |> get_nodes())),
+                          type = 'source') 
+```
+
+``` r
+
+
+
+# Change the colour for only specified links. (doesn't show in Rmarkdown)
+col = rep('gray', p |> get_links() |> length())
+col[c(1,5,10)] = 'orange'
+col[c(2,25,20)] = 'green'  
+
+q = p |> update_sankey_colour(colors_node = viridis::magma(length(p |> get_nodes())),
+                                colors_link = col)
+```
+
+### Saving / exporting sankey diagrams
+
+We can use the `saveNetwork()` from the NetworkD3 package to save the
+widget into an .html file or we can use the webshot() function from the
+webshot2 package to save a static version of the plot to a .png file (by
+taking an image from a saved .html version.
+
+``` r
+
+# Save the interactive sankey diagram
+networkD3::saveNetwork(network = p,
+                       file = paste0('sankey_diagram.html'))
+
+# Save a static version of the plot (need to save an interactive version first)
+webshot2::webshot(url = 'sankey_diagram.html',
+                  file =  'sankey_diagram.png',
+                  vwidth = 1000,
+                  vheight = 700)
+```
+
+Or to save the underlying information in the sankey diagram to formatted
+.xlsx file you can use the function
+[`sankey_export_xlsx()`](https://jake-powell.github.io/LStools/reference/sankey_export_xlsx.md),
+which allows a title and source to be added to the spreadsheet (needed
+for statistical disclosure). This method creates a spreadsheet with the
+columns ‘Source’, ‘Target’ and ‘Number of Students’ describing the flow
+between all nodes in the diagram. If we are saving a filtered sankey
+diagram another column will be added informing whether the flow relates
+to the traced or non-traced students.
+
+``` r
+
+  # Save an .xlsx file containing the sankey information (for SDC check)
+  p |> LStools::sankey_export_xlsx(title = 'Student flow from KS1 to A-level choices',
+                              source = 'Source: National Pupil Database',
+                              filepath = paste0(getwd(), '/sankey_information.xlsx'))
+  
+    # Save an .xlsx file containing the sankey information traced version
+    p = sankey_trace(pathways = pathways,
+                     flow_columns = c(3:6),
+                     split_by = c('GCSE: 9','GCSE: 8' ),
+                     union = T) 
+    p |>
+      LStools::sankey_export_xlsx(title = 'Student flow from KS1 to A-level choices tracing those that achieve grade 8 or 9 at GCSE',
+                              source = 'Source: National Pupil Database',
+                              filepath = paste0(getwd(), '/sankey_information2.xlsx'))
+```
+
+You can recreate the sankey diagrams (or return a list of nodes and
+links required for sankey diagrams) from the exported .xlsx files by
+using the
+[`sankey_from_extract()`](https://jake-powell.github.io/LStools/reference/sankey_from_extract.md)
+( or
+[`links_from_extract()`](https://jake-powell.github.io/LStools/reference/links_from_extract.md)).
