@@ -1,3 +1,47 @@
+
+#' Append JavaScript to an Existing htmlwidgets Render Hook
+#'
+#' Appends JavaScript code to an existing \code{htmlwidgets} render hook,
+#' allowing multiple widget customisations to be applied via successive
+#' calls. This is useful when composing functions that each add their own
+#' \code{onRender()} behaviour without overwriting previously registered
+#' JavaScript.
+#'
+#' @param p An \code{htmlwidget} object.
+#' @param js_code A character string containing JavaScript code to be
+#'   executed when the widget is rendered. The code should be a valid
+#'   \code{onRender()} callback function.
+#'
+#' @return The modified \code{htmlwidget} object.
+#'
+#' @keywords internal
+#'
+#' @examples
+#' \dontrun{
+#' p <- networkD3::sankeyNetwork(...)
+#'
+#' p <- append_onRender(
+#'   p,
+#'   "function(el) { console.log('First hook'); }"
+#' )
+#'
+#' p <- append_onRender(
+#'   p,
+#'   "function(el) { console.log('Second hook'); }"
+#' )
+#' }
+append_onRender <- function(p, js_code) {
+  existing <- p$x$jsHooks$render
+
+  if (is.null(existing)) {
+    htmlwidgets::onRender(p, js_code)
+  } else {
+    combined <- paste0(existing, "\n", js_code)
+    htmlwidgets::onRender(p, combined)
+  }
+}
+
+
 #' Functions to customise the styling of the sankey diagrams
 #'
 #' @details
@@ -28,12 +72,12 @@
 #'
 add_column_names <- function(p, titles, fontSize = p$x$options$fontSize, fontFamily = p$x$options$fontFamily){
   labels = titles
-  p =htmlwidgets::onRender(p, paste0('
+  js = paste0('
   function(el) {
     var cols_x = this.sankey.nodes().map(d => d.x).filter((v, i, a) => a.indexOf(v) === i).sort(function(a, b){return a - b});
     var labels = [',
-                                     paste(shQuote(labels, type="cmd"), collapse=", "),
-                                     '];
+              paste(shQuote(labels, type="cmd"), collapse=", "),
+              '];
     cols_x.forEach((d, i) => {
       d3.select(el).select("svg")
         .append("text")
@@ -44,50 +88,84 @@ add_column_names <- function(p, titles, fontSize = p$x$options$fontSize, fontFam
         .style("font-family", "',fontFamily,'");
     })
   }
-'))
-  p
+')
+  append_onRender(p, js)
+
 }
 
 #' @rdname add_column_names
 #' @export
 add_node_hover_text <- function(p, hovertext){
   p$x$nodes$state <- hovertext
-  p <- htmlwidgets::onRender(
-    p,
-    '
+  js = '
             function(el, x) {
                 d3.selectAll(".node").select("title foreignObject body pre")
                 .text(function(d) { return d.state; });
             }
             '
-  )
-  p
+  append_onRender(p, js)
+
 }
 
 #' @rdname add_column_names
 #' @export
 add_link_hover_text <- function(p, hovertext){
   p$x$links$name <- hovertext
-  p <- htmlwidgets::onRender(
-    p,
-    '
+  js = '
   function(el, x) {
   d3.selectAll(".link").select("title foreignObject body pre")
   .text(function(d) { return d.name; });
   }
   '
-  )
-  p
+  append_onRender(p, js)
+
 }
 
 #' @rdname add_column_names
 #' @export
-update_node_labels <- function(p, labels = NULL){
-  if( length(labels) == length(p$x$nodes$name)){
-    p$x$nodes$name = labels
+update_node_labels = function(p, labels = NULL) {
+
+  if (length(labels) == length(p$x$nodes$name)) {
+    p$x$nodes$name <- labels
   }
-  htmlwidgets::onRender(p,'')
+
+  append_onRender(
+    p,
+    '
+    function(el) {
+
+      d3.select(el)
+        .selectAll(".node text")
+        .each(function() {
+
+          var text = d3.select(this);
+
+          var x = text.attr("x");
+          var y = text.attr("y");
+
+          var lines = text.text().split("\\n");
+
+          if(lines.length > 1) {
+
+            text.text("");
+
+            lines.forEach(function(line, i) {
+
+              text.append("tspan")
+                .attr("x", x)
+                .attr("dy", i === 0 ? 0 : "1.1em")
+                .text(line);
+
+            });
+          }
+
+        });
+
+    }
+    '
+  )
 }
+
 
 #' @rdname add_column_names
 #' @export
@@ -151,7 +229,7 @@ update_sankey_colour <- function(p ,colors_node = NULL, colors_link = NULL, type
     p$x$options$colourScale = my_color
 
   }
-  htmlwidgets::onRender(p,'')
+  append_onRender(p, '')
   # p
 }
 
@@ -199,8 +277,7 @@ set_font_family <- function(
      }',
     ff_json, as.integer(wait_ms)
   )
-
-  htmlwidgets::onRender(p, js)
+  append_onRender(p, js)
 }
 
 
